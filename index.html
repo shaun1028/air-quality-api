@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Air Quality Monitor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0c1210;
+    --panel: #121a17;
+    --line: #1f2b27;
+    --text: #e7efe9;
+    --text-dim: #7e9389;
+    --co2: #4fd1a5;
+    --pm25: #e8c468;
+    --pm10: #e2685f;
+    --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    --sans: 'Inter', -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 32px 20px;
+  }
+
+  .wrap { max-width: 960px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 20px;
+  }
+
+  .title {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .title strong {
+    display: block;
+    font-family: var(--sans);
+    font-size: 22px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .status {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--co2);
+    box-shadow: 0 0 8px var(--co2);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .dot.offline { background: var(--pm10); box-shadow: 0 0 8px var(--pm10); animation: none; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .card .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .card .value {
+    font-family: var(--mono);
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .card .unit {
+    font-size: 14px;
+    color: var(--text-dim);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+
+  .card .sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 10px;
+  }
+
+  .co2-val { color: var(--co2); }
+  .pm25-val { color: var(--pm25); }
+  .pm10-val { color: var(--pm10); }
+
+  .chart-panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 16px;
+    height: 360px;
+  }
+
+  .chart-panel .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 12px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  footer {
+    margin-top: 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  @media (max-width: 640px) {
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="title">
+      Indoor Environment
+      <strong>Air Quality Monitor</strong>
+    </div>
+    <div class="status">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">connecting…</span>
+    </div>
+  </header>
+
+  <div class="cards">
+    <div class="card">
+      <div class="label">CO2</div>
+      <div class="value co2-val"><span id="co2Val">—</span><span class="unit">ppm</span></div>
+      <div class="sub" id="lastUpdated">waiting for data…</div>
+    </div>
+    <div class="card">
+      <div class="label">PM2.5</div>
+      <div class="value pm25-val"><span id="pm25Val">—</span><span class="unit">µg/m³</span></div>
+      <div class="sub">fine particles</div>
+    </div>
+    <div class="card">
+      <div class="label">PM10</div>
+      <div class="value pm10-val"><span id="pm10Val">—</span><span class="unit">µg/m³</span></div>
+      <div class="sub">coarse particles</div>
+    </div>
+  </div>
+
+  <div class="chart-panel">
+    <div class="label">Readings Over Time</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#4fd1a5"></div> CO2 (ppm)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e8c468"></div> PM2.5 (µg/m³)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e2685f"></div> PM10 (µg/m³)</div>
+    </div>
+    <canvas id="chartCanvas"></canvas>
+  </div>
+
+  <footer>MH-Z19C + PMS5003 · ESP32 · refreshes every 5s</footer>
+
+</div>
+
+<script>
+const API_URL = "get_data.php?limit=100";
+const REFRESH_MS = 5000;
+
+const ctx = document.getElementById('chartCanvas').getContext('2d');
+
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [
+      {
+        label: 'CO2 (ppm)',
+        data: [],
+        borderColor: '#4fd1a5',
+        backgroundColor: 'rgba(79,209,165,0.06)',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: true,
+        yAxisID: 'yCO2'
+      },
+      {
+        label: 'PM2.5 (µg/m³)',
+        data: [],
+        borderColor: '#e8c468',
+        backgroundColor: 'rgba(232,196,104,0.06)',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: true,
+        yAxisID: 'yPM'
+      },
+      {
+        label: 'PM10 (µg/m³)',
+        data: [],
+        borderColor: '#e2685f',
+        backgroundColor: 'rgba(226,104,95,0.06)',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: true,
+        yAxisID: 'yPM'
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 300 },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#121a17',
+        borderColor: '#1f2b27',
+        borderWidth: 1,
+        titleColor: '#7e9389',
+        bodyColor: '#e7efe9',
+        padding: 10
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: '#1f2b27' },
+        ticks: { color: '#7e9389', font: { family: 'monospace', size: 10 }, maxTicksLimit: 8 }
+      },
+      yCO2: {
+        type: 'linear',
+        position: 'left',
+        grid: { color: '#1f2b27' },
+        ticks: { color: '#4fd1a5', font: { family: 'monospace', size: 11 } },
+        title: { display: true, text: 'CO2 (ppm)', color: '#4fd1a5' }
+      },
+      yPM: {
+        type: 'linear',
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        ticks: { color: '#e8c468', font: { family: 'monospace', size: 11 } },
+        title: { display: true, text: 'PM (µg/m³)', color: '#e8c468' }
+      }
+    }
+  }
+});
+
+function formatTime(ts) {
+  const d = new Date(ts.replace(' ', 'T'));
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+async function fetchData() {
+  try {
+    const res = await fetch(API_URL);
+    const json = await res.json();
+
+    if (json.status !== 'success' || !json.data || json.data.length === 0) {
+      setStatus(false);
+      return;
+    }
+
+    setStatus(true);
+
+    const rows = json.data;
+    chart.data.labels = rows.map(r => formatTime(r.timestamp));
+    chart.data.datasets[0].data = rows.map(r => parseFloat(r.co2));
+    chart.data.datasets[1].data = rows.map(r => parseFloat(r.pm25));
+    chart.data.datasets[2].data = rows.map(r => parseFloat(r.pm10));
+    chart.update();
+
+    const latest = rows[rows.length - 1];
+    document.getElementById('co2Val').textContent = parseFloat(latest.co2).toFixed(0);
+    document.getElementById('pm25Val').textContent = parseFloat(latest.pm25).toFixed(1);
+    document.getElementById('pm10Val').textContent = parseFloat(latest.pm10).toFixed(1);
+    document.getElementById('lastUpdated').textContent = "as of " + formatTime(latest.timestamp);
+
+  } catch (err) {
+    console.error("Fetch error:", err);
+    setStatus(false);
+  }
+}
+
+function setStatus(online) {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  if (online) {
+    dot.classList.remove('offline');
+    text.textContent = 'live';
+  } else {
+    dot.classList.add('offline');
+    text.textContent = 'no data / offline';
+  }
+}
+
+fetchData();
+setInterval(fetchData, REFRESH_MS);
+</script>
+</body>
+</html>
