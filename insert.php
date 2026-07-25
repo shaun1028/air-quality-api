@@ -1,4 +1,6 @@
 <?php
+
+date_default_timezone_set('Asia/Kuala_Lumpur');
 // insert.php
 // Receives CO2 + PM2.5 + PM10 readings from ESP32 and inserts into Railway MySQL.
 // Expected request: insert.php?co2=842.5&pm25=12.3&pm10=25.6
