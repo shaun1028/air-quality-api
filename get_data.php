@@ -1,4 +1,6 @@
 <?php
+
+date_default_timezone_set('Asia/Kuala_Lumpur');
 // get_data.php
 // Returns recent air quality readings from Railway MySQL as JSON.
 
