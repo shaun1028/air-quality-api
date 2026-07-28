@@ -15,6 +15,8 @@
     --co2: #4fd1a5;
     --pm25: #e8c468;
     --pm10: #e2685f;
+    --temp: #60a5fa;
+    --hum: #a78bfa;
     --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
     --sans: 'Inter', -apple-system, sans-serif;
   }
@@ -29,7 +31,7 @@
     padding: 32px 20px;
   }
 
-  .wrap { max-width: 960px; margin: 0 auto; }
+  .wrap { max-width: 980px; margin: 0 auto; }
 
   header {
     display: flex;
@@ -76,26 +78,25 @@
     animation: pulse 2s ease-in-out infinite;
   }
   .dot.offline { background: var(--pm10); box-shadow: 0 0 8px var(--pm10); animation: none; }
-
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
   .cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
   }
 
   .card {
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 10px;
-    padding: 20px;
+    padding: 18px 16px;
   }
 
   .card .label {
     font-family: var(--mono);
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-dim);
@@ -104,64 +105,88 @@
 
   .card .value {
     font-family: var(--mono);
-    font-size: 36px;
+    font-size: 28px;
     font-weight: 600;
     line-height: 1;
   }
 
   .card .unit {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--text-dim);
     font-weight: 400;
-    margin-left: 4px;
+    margin-left: 3px;
   }
 
   .card .sub {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
-    margin-top: 10px;
+    margin-top: 8px;
   }
 
-  .co2-val { color: var(--co2); }
+  .co2-val  { color: var(--co2);  }
   .pm25-val { color: var(--pm25); }
   .pm10-val { color: var(--pm10); }
+  .temp-val { color: var(--temp); }
+  .hum-val  { color: var(--hum);  }
+
+  /* Two chart columns */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* Full width chart */
+  .chart-full {
+    margin-bottom: 16px;
+  }
 
   .chart-panel {
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 10px;
-    padding: 24px;
-    margin-bottom: 16px;
-    height: 360px;
+    padding: 20px;
+    height: 260px;
   }
 
-  .chart-panel .label {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 16px;
+  .chart-panel-tall {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+    height: 280px;
   }
 
-  .legend {
+  .chart-header {
     display: flex;
-    gap: 20px;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 12px;
   }
 
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+  .chart-label {
     font-family: var(--mono);
-    font-size: 11px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: var(--text-dim);
   }
 
-  .legend-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
+  .chart-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+
+  .last-updated {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 8px;
   }
 
   footer {
@@ -172,8 +197,10 @@
     text-align: center;
   }
 
-  @media (max-width: 640px) {
-    .cards { grid-template-columns: 1fr; }
+  @media (max-width: 700px) {
+    .cards { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .card .value { font-size: 22px; }
   }
 </style>
 </head>
@@ -182,7 +209,7 @@
 
   <header>
     <div class="title">
-      Indoor Environment
+      Indoor Environment · Penang
       <strong>Air Quality Monitor</strong>
     </div>
     <div class="status">
@@ -191,35 +218,84 @@
     </div>
   </header>
 
+  <!-- 5 sensor cards -->
   <div class="cards">
     <div class="card">
-      <div class="label">CO2</div>
+      <div class="label">CO₂</div>
       <div class="value co2-val"><span id="co2Val">—</span><span class="unit">ppm</span></div>
-      <div class="sub" id="lastUpdated">waiting for data…</div>
+      <div class="sub" id="co2Sub">—</div>
     </div>
     <div class="card">
       <div class="label">PM2.5</div>
       <div class="value pm25-val"><span id="pm25Val">—</span><span class="unit">µg/m³</span></div>
-      <div class="sub">fine particles</div>
+      <div class="sub" id="pm25Sub">—</div>
     </div>
     <div class="card">
       <div class="label">PM10</div>
       <div class="value pm10-val"><span id="pm10Val">—</span><span class="unit">µg/m³</span></div>
-      <div class="sub">coarse particles</div>
+      <div class="sub" id="pm10Sub">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Temperature</div>
+      <div class="value temp-val"><span id="tempVal">—</span><span class="unit">°C</span></div>
+      <div class="sub" id="tempSub">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Humidity</div>
+      <div class="value hum-val"><span id="humVal">—</span><span class="unit">%</span></div>
+      <div class="sub" id="humSub">—</div>
     </div>
   </div>
 
-  <div class="chart-panel">
-    <div class="label">Readings Over Time</div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#4fd1a5"></div> CO2 (ppm)</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e8c468"></div> PM2.5 (µg/m³)</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e2685f"></div> PM10 (µg/m³)</div>
+  <!-- CO2 full width -->
+  <div class="chart-full">
+    <div class="chart-panel-tall">
+      <div class="chart-header">
+        <div class="chart-label">CO₂ Over Time</div>
+        <span class="chart-badge" style="color:var(--co2);border-color:var(--co2)">ppm</span>
+      </div>
+      <canvas id="co2Chart"></canvas>
     </div>
-    <canvas id="chartCanvas"></canvas>
   </div>
 
-  <footer>MH-Z19C + PMS5003 · ESP32 · refreshes every 5s</footer>
+  <!-- PM2.5 and PM10 side by side -->
+  <div class="charts-grid">
+    <div class="chart-panel">
+      <div class="chart-header">
+        <div class="chart-label">PM2.5 Over Time</div>
+        <span class="chart-badge" style="color:var(--pm25);border-color:var(--pm25)">µg/m³</span>
+      </div>
+      <canvas id="pm25Chart"></canvas>
+    </div>
+    <div class="chart-panel">
+      <div class="chart-header">
+        <div class="chart-label">PM10 Over Time</div>
+        <span class="chart-badge" style="color:var(--pm10);border-color:var(--pm10)">µg/m³</span>
+      </div>
+      <canvas id="pm10Chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Temperature and Humidity side by side -->
+  <div class="charts-grid">
+    <div class="chart-panel">
+      <div class="chart-header">
+        <div class="chart-label">Temperature Over Time</div>
+        <span class="chart-badge" style="color:var(--temp);border-color:var(--temp)">°C</span>
+      </div>
+      <canvas id="tempChart"></canvas>
+    </div>
+    <div class="chart-panel">
+      <div class="chart-header">
+        <div class="chart-label">Humidity Over Time</div>
+        <span class="chart-badge" style="color:var(--hum);border-color:var(--hum)">%</span>
+      </div>
+      <canvas id="humChart"></canvas>
+    </div>
+  </div>
+
+  <div class="last-updated" id="lastUpdated">waiting for data…</div>
+  <footer>MH-Z19C · PMS5003 · DHT22 · ESP32 · refreshes every 5s</footer>
 
 </div>
 
@@ -227,94 +303,107 @@
 const API_URL = "get_data.php?limit=100";
 const REFRESH_MS = 5000;
 
-const ctx = document.getElementById('chartCanvas').getContext('2d');
-
-const chart = new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: [],
-    datasets: [
-      {
-        label: 'CO2 (ppm)',
+function makeChart(id, color, yLabel) {
+  const ctx = document.getElementById(id).getContext('2d');
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
         data: [],
-        borderColor: '#4fd1a5',
-        backgroundColor: 'rgba(79,209,165,0.06)',
+        borderColor: color,
+        backgroundColor: color.replace(')', ', 0.08)').replace('rgb', 'rgba'),
         borderWidth: 2,
         pointRadius: 0,
         tension: 0.3,
-        fill: true,
-        yAxisID: 'yCO2'
-      },
-      {
-        label: 'PM2.5 (µg/m³)',
-        data: [],
-        borderColor: '#e8c468',
-        backgroundColor: 'rgba(232,196,104,0.06)',
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.3,
-        fill: true,
-        yAxisID: 'yPM'
-      },
-      {
-        label: 'PM10 (µg/m³)',
-        data: [],
-        borderColor: '#e2685f',
-        backgroundColor: 'rgba(226,104,95,0.06)',
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.3,
-        fill: true,
-        yAxisID: 'yPM'
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: 300 },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: '#121a17',
-        borderColor: '#1f2b27',
-        borderWidth: 1,
-        titleColor: '#7e9389',
-        bodyColor: '#e7efe9',
-        padding: 10
-      }
+        fill: true
+      }]
     },
-    scales: {
-      x: {
-        grid: { color: '#1f2b27' },
-        ticks: { color: '#7e9389', font: { family: 'monospace', size: 10 }, maxTicksLimit: 8 }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#121a17',
+          borderColor: '#1f2b27',
+          borderWidth: 1,
+          titleColor: '#7e9389',
+          bodyColor: '#e7efe9',
+          padding: 10
+        }
       },
-      yCO2: {
-        type: 'linear',
-        position: 'left',
-        grid: { color: '#1f2b27' },
-        ticks: { color: '#4fd1a5', font: { family: 'monospace', size: 11 } },
-        title: { display: true, text: 'CO2 (ppm)', color: '#4fd1a5' }
-      },
-      yPM: {
-        type: 'linear',
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        ticks: { color: '#e8c468', font: { family: 'monospace', size: 11 } },
-        title: { display: true, text: 'PM (µg/m³)', color: '#e8c468' }
+      scales: {
+        x: {
+          grid: { color: '#1f2b27' },
+          ticks: { color: '#7e9389', font: { family: 'monospace', size: 9 }, maxTicksLimit: 6 }
+        },
+        y: {
+          grid: { color: '#1f2b27' },
+          ticks: { color: color, font: { family: 'monospace', size: 10 } },
+          title: { display: false }
+        }
       }
     }
-  }
-});
+  });
+}
+
+// Create all 5 charts
+const co2Chart  = makeChart('co2Chart',  '#4fd1a5', 'ppm');
+const pm25Chart = makeChart('pm25Chart', '#e8c468', 'µg/m³');
+const pm10Chart = makeChart('pm10Chart', '#e2685f', 'µg/m³');
+const tempChart = makeChart('tempChart', '#60a5fa', '°C');
+const humChart  = makeChart('humChart',  '#a78bfa', '%');
+
+function co2Label(v)  {
+  if (v < 600)  return 'Good';
+  if (v < 1000) return 'Moderate';
+  if (v < 2000) return 'Poor';
+  return 'Hazardous';
+}
+
+function pm25Label(v) {
+  if (v <= 15)  return 'Good';
+  if (v <= 35)  return 'Moderate';
+  if (v <= 65)  return 'Unhealthy';
+  if (v <= 150) return 'Very Unhealthy';
+  return 'Hazardous';
+}
+
+function pm10Label(v) {
+  if (v <= 50)  return 'Good';
+  if (v <= 100) return 'Moderate';
+  if (v <= 150) return 'Unhealthy';
+  return 'Very Unhealthy';
+}
+
+function tempLabel(v) {
+  if (v < 20)   return 'Cool';
+  if (v <= 28)  return 'Comfortable';
+  return 'Warm';
+}
+
+function humLabel(v) {
+  if (v < 30)  return 'Dry';
+  if (v <= 60) return 'Comfortable';
+  return 'Humid';
+}
 
 function formatTime(ts) {
   const d = new Date(ts.replace(' ', 'T'));
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function updateChart(chart, labels, data) {
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update();
 }
 
 async function fetchData() {
   try {
-    const res = await fetch(API_URL);
+    const res  = await fetch(API_URL);
     const json = await res.json();
 
     if (json.status !== 'success' || !json.data || json.data.length === 0) {
@@ -324,18 +413,35 @@ async function fetchData() {
 
     setStatus(true);
 
-    const rows = json.data;
-    chart.data.labels = rows.map(r => formatTime(r.timestamp));
-    chart.data.datasets[0].data = rows.map(r => parseFloat(r.co2));
-    chart.data.datasets[1].data = rows.map(r => parseFloat(r.pm25));
-    chart.data.datasets[2].data = rows.map(r => parseFloat(r.pm10));
-    chart.update();
+    const rows   = json.data;
+    const labels = rows.map(r => formatTime(r.timestamp));
 
-    const latest = rows[rows.length - 1];
-    document.getElementById('co2Val').textContent = parseFloat(latest.co2).toFixed(0);
-    document.getElementById('pm25Val').textContent = parseFloat(latest.pm25).toFixed(1);
-    document.getElementById('pm10Val').textContent = parseFloat(latest.pm10).toFixed(1);
-    document.getElementById('lastUpdated').textContent = "as of " + formatTime(latest.timestamp);
+    updateChart(co2Chart,  labels, rows.map(r => parseFloat(r.co2)));
+    updateChart(pm25Chart, labels, rows.map(r => parseFloat(r.pm25)));
+    updateChart(pm10Chart, labels, rows.map(r => parseFloat(r.pm10)));
+    updateChart(tempChart, labels, rows.map(r => parseFloat(r.temperature)));
+    updateChart(humChart,  labels, rows.map(r => parseFloat(r.humidity)));
+
+    const l    = rows[rows.length - 1];
+    const co2  = parseFloat(l.co2).toFixed(0);
+    const pm25 = parseFloat(l.pm25).toFixed(1);
+    const pm10 = parseFloat(l.pm10).toFixed(1);
+    const temp = parseFloat(l.temperature).toFixed(1);
+    const hum  = parseFloat(l.humidity).toFixed(1);
+
+    document.getElementById('co2Val').textContent  = co2;
+    document.getElementById('pm25Val').textContent = pm25;
+    document.getElementById('pm10Val').textContent = pm10;
+    document.getElementById('tempVal').textContent = temp;
+    document.getElementById('humVal').textContent  = hum;
+
+    document.getElementById('co2Sub').textContent  = co2Label(parseFloat(co2));
+    document.getElementById('pm25Sub').textContent = pm25Label(parseFloat(pm25));
+    document.getElementById('pm10Sub').textContent = pm10Label(parseFloat(pm10));
+    document.getElementById('tempSub').textContent = tempLabel(parseFloat(temp));
+    document.getElementById('humSub').textContent  = humLabel(parseFloat(hum));
+
+    document.getElementById('lastUpdated').textContent = 'Last updated: ' + l.timestamp;
 
   } catch (err) {
     console.error("Fetch error:", err);
@@ -344,7 +450,7 @@ async function fetchData() {
 }
 
 function setStatus(online) {
-  const dot = document.getElementById('statusDot');
+  const dot  = document.getElementById('statusDot');
   const text = document.getElementById('statusText');
   if (online) {
     dot.classList.remove('offline');
