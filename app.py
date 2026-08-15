@@ -36,7 +36,7 @@ ai_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 SENSOR_COLS = ["co2", "pm25", "pm10", "temperature", "humidity", "is_valid"]
 LAGS = [0, 5, 10, 15]
 
-# In-memory AI advice cache (refreshes every 2 minutes to keep requests fast)
+# In-memory AI advice cache
 cached_ai_response = {
     "status_badge": "Optimal",
     "analysis": "Air quality is currently stable and within healthy thresholds.",
@@ -154,7 +154,6 @@ def generate_ai_recommendation(current, pred_pm25, pred_pm10, pred_co2):
 # ==========================================
 def build_features_from_history(recent_rows, current_reading):
     """Combines previous MySQL rows with the live incoming reading
-
     to construct the 24 lag features for the Random Forest model.
     """
     all_readings = recent_rows + [current_reading]
@@ -203,7 +202,7 @@ def ingest_sensor_data():
     try:
         conn = get_db_connection()
         with conn.cursor() as cur:
-            # Step A: Query past 15 records from MySQL table
+            # Query past 15 records from MySQL table and convert to list
             cur.execute(
                 """
                 SELECT co2, pm25, pm10, temperature, humidity, is_valid 
@@ -212,10 +211,10 @@ def ingest_sensor_data():
                 LIMIT 15
             """
             )
-            recent_history = cur.fetchall()
-            recent_history.reverse()
+            raw_history = cur.fetchall()
+            recent_history = list(raw_history)[::-1] if raw_history else []
 
-            # Step B: Predict if enough history is available
+            # Predict if enough history is available
             if len(recent_history) >= 15 and rf_model is not None:
                 features_df = build_features_from_history(
                     recent_history, current_reading
@@ -226,10 +225,10 @@ def ingest_sensor_data():
                 pred_pm10 = round(float(predictions[1]), 2)
                 pred_co2 = round(float(predictions[2]), 2)
 
-                # Step C: Send Telegram alert if necessary
+                # Send Telegram alert if necessary
                 check_and_send_telegram_alert(pred_pm25, pred_pm10, pred_co2)
 
-            # Step D: Insert current readings and forecast into MySQL
+            # Insert current readings and forecast into MySQL
             cur.execute(
                 """
                 INSERT INTO sensor_logs 
@@ -286,10 +285,10 @@ def get_dashboard_data():
                 LIMIT 30
             """
             )
-            rows = cur.fetchall()
+            raw_rows = cur.fetchall()
         conn.close()
 
-        rows.reverse()
+        rows = list(raw_rows)[::-1] if raw_rows else []
         latest = rows[-1] if rows else {}
 
         # Generate contextual AI Copilot advice
