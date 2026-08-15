@@ -6,3 +6,5 @@ joblib
 gunicorn
 psycopg2-binary
 requests
+pymysql
+cryptography
