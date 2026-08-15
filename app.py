@@ -1,9 +1,10 @@
 import os
+from urllib.parse import urlparse
 import joblib
 import numpy as np
 import pandas as pd
-import psycopg2  # Use 'mysql.connector' or 'pymysql' if using MySQL
-from psycopg2.extras import RealDictCursor
+import pymysql
+import pymysql.cursors
 import requests
 from flask import Flask, jsonify, request
 
@@ -20,28 +21,38 @@ except Exception as e:
     print(f"❌ Error loading model: {e}")
     rf_model = None
 
-# Railway Database Connection URL (Set in Railway Variables)
+# Railway Environment Variables
 DATABASE_URL = os.getenv("DATABASE_URL")
-
-# Telegram Bot Config (Set in Railway Variables or paste directly)
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_CHAT_ID_HERE")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 SENSOR_COLS = ["co2", "pm25", "pm10", "temperature", "humidity", "is_valid"]
 LAGS = [0, 5, 10, 15]
 
 
 def get_db_connection():
-    """Connects to the Railway PostgreSQL database."""
-    return psycopg2.connect(DATABASE_URL)
+    """Connects to the Railway MySQL database using DATABASE_URL."""
+    if not DATABASE_URL:
+        raise ValueError("DATABASE_URL environment variable is not set.")
+
+    db_url = urlparse(DATABASE_URL)
+    return pymysql.connect(
+        host=db_url.hostname,
+        user=db_url.username,
+        password=db_url.password,
+        database=db_url.path.lstrip("/"),
+        port=db_url.port or 3306,
+        cursorclass=pymysql.cursors.DictCursor,
+        autocommit=True,
+    )
 
 
 # ==========================================
 # 2. Telegram Alert Function
 # ==========================================
 def check_and_send_telegram_alert(pred_pm25, pred_pm10, pred_co2):
-    """Sends a Telegram alert if predicted 15-min levels breach safe thresholds."""
-    if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
+    """Sends a Telegram alert if predicted 15-min levels breach safety limits."""
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         return
 
     alerts = []
@@ -78,16 +89,14 @@ def check_and_send_telegram_alert(pred_pm25, pred_pm10, pred_co2):
 # 3. Feature Vector Builder
 # ==========================================
 def build_features_from_history(recent_rows, current_reading):
-    """Combines previous database records with the live incoming reading
+    """Combines previous MySQL rows with the live incoming reading
 
     to construct the 24 lag features for the Random Forest model.
     """
-    # Combine historical rows + current live reading
     all_readings = recent_rows + [current_reading]
     df = pd.DataFrame(all_readings)
     df.columns = df.columns.str.strip().str.lower()
 
-    # Construct the 24 lag features
     feature_dict = {}
     for col in SENSOR_COLS:
         for lag in LAGS:
@@ -100,7 +109,7 @@ def build_features_from_history(recent_rows, current_reading):
 
 
 # ==========================================
-# 4. Main Ingestion Endpoint (ESP32 -> Server)
+# 4. Main Ingestion Endpoint (ESP32 / Postman -> Server)
 # ==========================================
 @app.route("/api/sensor-data", methods=["POST"])
 def ingest_sensor_data():
@@ -108,7 +117,6 @@ def ingest_sensor_data():
     if not data:
         return jsonify({"error": "Invalid JSON body"}), 400
 
-    # Extract current incoming reading from ESP32
     current_reading = {
         "co2": float(data.get("co2", 0)),
         "pm25": float(data.get("pm25", 0)),
@@ -120,59 +128,55 @@ def ingest_sensor_data():
 
     pred_pm25, pred_pm10, pred_co2 = None, None, None
 
-    # Step A: Query past 15 records from DB to construct lag features
     try:
         conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        # Retrieve last 15 rows ordered chronologically
-        cur.execute(
+        with conn.cursor() as cur:
+            # Step A: Query past 15 records from MySQL table
+            cur.execute(
+                """
+                SELECT co2, pm25, pm10, temperature, humidity, is_valid 
+                FROM sensor_logs 
+                ORDER BY timestamp DESC 
+                LIMIT 15
             """
-            SELECT co2, pm25, pm10, temperature, humidity, is_valid 
-            FROM sensor_logs 
-            ORDER BY timestamp DESC 
-            LIMIT 15
-        """
-        )
-        recent_history = cur.fetchall()
-        recent_history.reverse()  # Reverse to chronological order (oldest to newest)
-
-        # Step B: Run Random Forest Prediction if enough historical data exists
-        if len(recent_history) >= 15 and rf_model is not None:
-            features_df = build_features_from_history(
-                recent_history, current_reading
             )
-            predictions = rf_model.predict(features_df)[0]
+            recent_history = cur.fetchall()
+            recent_history.reverse()
 
-            pred_pm25 = round(float(predictions[0]), 2)
-            pred_pm10 = round(float(predictions[1]), 2)
-            pred_co2 = round(float(predictions[2]), 2)
+            # Step B: Predict if enough history is available
+            if len(recent_history) >= 15 and rf_model is not None:
+                features_df = build_features_from_history(
+                    recent_history, current_reading
+                )
+                predictions = rf_model.predict(features_df)[0]
 
-            # Check Telegram Alert thresholds
-            check_and_send_telegram_alert(pred_pm25, pred_pm10, pred_co2)
+                pred_pm25 = round(float(predictions[0]), 2)
+                pred_pm10 = round(float(predictions[1]), 2)
+                pred_co2 = round(float(predictions[2]), 2)
 
-        # Step C: Insert current reading and predicted values into Database
-        cur.execute(
-            """
-            INSERT INTO sensor_logs 
-            (co2, pm25, pm10, temperature, humidity, is_valid, pred_pm25, pred_pm10, pred_co2, timestamp)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
-        """,
-            (
-                current_reading["co2"],
-                current_reading["pm25"],
-                current_reading["pm10"],
-                current_reading["temperature"],
-                current_reading["humidity"],
-                current_reading["is_valid"],
-                pred_pm25,
-                pred_pm10,
-                pred_co2,
-            ),
-        )
+                # Step C: Send Telegram alert if necessary
+                check_and_send_telegram_alert(pred_pm25, pred_pm10, pred_co2)
 
-        conn.commit()
-        cur.close()
+            # Step D: Insert current readings and forecast into MySQL
+            cur.execute(
+                """
+                INSERT INTO sensor_logs 
+                (co2, pm25, pm10, temperature, humidity, is_valid, pred_pm25, pred_pm10, pred_co2, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            """,
+                (
+                    current_reading["co2"],
+                    current_reading["pm25"],
+                    current_reading["pm10"],
+                    current_reading["temperature"],
+                    current_reading["humidity"],
+                    current_reading["is_valid"],
+                    pred_pm25,
+                    pred_pm10,
+                    pred_co2,
+                ),
+            )
+
         conn.close()
 
         return (
@@ -191,9 +195,15 @@ def ingest_sensor_data():
         )
 
     except Exception as e:
-        print(f"Database/Ingestion Error: {e}")
+        print(f"Error during ingestion: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/", methods=["GET"])
+def health_check():
+    return jsonify({"status": "running", "service": "Air Quality Predictor"}), 200
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
