@@ -4,7 +4,7 @@ numpy
 scikit-learn
 joblib
 gunicorn
-psycopg2-binary
-requests
 pymysql
 cryptography
+requests
+google-genai
