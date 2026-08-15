@@ -1,11 +1,17 @@
+import os
 import joblib
 import numpy as np
 import pandas as pd
+import psycopg2  # Use 'mysql.connector' or 'pymysql' if using MySQL
+from psycopg2.extras import RealDictCursor
+import requests
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-# 1. Load the pre-trained Random Forest model when the server boots
+# ==========================================
+# 1. Configuration & Model Loading
+# ==========================================
 MODEL_PATH = "random_forest_air_quality.pkl"
 try:
     rf_model = joblib.load(MODEL_PATH)
@@ -14,75 +20,180 @@ except Exception as e:
     print(f"❌ Error loading model: {e}")
     rf_model = None
 
-# Define exact feature order expected by the trained model
+# Railway Database Connection URL (Set in Railway Variables)
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Telegram Bot Config (Set in Railway Variables or paste directly)
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_CHAT_ID_HERE")
+
 SENSOR_COLS = ["co2", "pm25", "pm10", "temperature", "humidity", "is_valid"]
 LAGS = [0, 5, 10, 15]
 
 
-def construct_feature_vector(recent_logs):
-    """Expects a pandas DataFrame or list of dicts with at least 16 recent logs
+def get_db_connection():
+    """Connects to the Railway PostgreSQL database."""
+    return psycopg2.connect(DATABASE_URL)
 
-    sorted chronologically (oldest to newest) to extract lags at t, t-5, t-10, t-15.
+
+# ==========================================
+# 2. Telegram Alert Function
+# ==========================================
+def check_and_send_telegram_alert(pred_pm25, pred_pm10, pred_co2):
+    """Sends a Telegram alert if predicted 15-min levels breach safe thresholds."""
+    if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
+        return
+
+    alerts = []
+    if pred_pm25 > 35.0:
+        alerts.append(f"• *PM2.5* predicted at `{pred_pm25:.1f} µg/m³` (Unhealthy)")
+    if pred_pm10 > 100.0:
+        alerts.append(f"• *PM10* predicted at `{pred_pm10:.1f} µg/m³` (Elevated)")
+    if pred_co2 > 1000.0:
+        alerts.append(f"• *CO2* predicted at `{pred_co2:.0f} ppm` (Poor Ventilation)")
+
+    if alerts:
+        message = (
+            "⚠️ *15-MINUTE AIR QUALITY WARNING* ⚠️\n\n"
+            "Forecast predicts thresholds will be exceeded:\n"
+            + "\n".join(alerts)
+            + "\n\n💡 *Recommendation:* Please turn on ventilation or air purifiers."
+        )
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        try:
+            requests.post(
+                url,
+                json={
+                    "chat_id": TELEGRAM_CHAT_ID,
+                    "text": message,
+                    "parse_mode": "Markdown",
+                },
+                timeout=5,
+            )
+        except Exception as e:
+            print(f"Telegram notification error: {e}")
+
+
+# ==========================================
+# 3. Feature Vector Builder
+# ==========================================
+def build_features_from_history(recent_rows, current_reading):
+    """Combines previous database records with the live incoming reading
+
+    to construct the 24 lag features for the Random Forest model.
     """
-    df = pd.DataFrame(recent_logs)
-
-    # Clean column headers
+    # Combine historical rows + current live reading
+    all_readings = recent_rows + [current_reading]
+    df = pd.DataFrame(all_readings)
     df.columns = df.columns.str.strip().str.lower()
 
-    # Generate current (t=0) and lag features (t-5, t-10, t-15)
+    # Construct the 24 lag features
     feature_dict = {}
     for col in SENSOR_COLS:
         for lag in LAGS:
             if lag == 0:
-                # Latest value (current)
                 feature_dict[f"{col}_current"] = df[col].iloc[-1]
             else:
-                # Historical values from previous intervals
                 feature_dict[f"{col}_lag_{lag}"] = df[col].iloc[-1 - lag]
 
     return pd.DataFrame([feature_dict])
 
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    if rf_model is None:
-        return jsonify({"error": "Model file not found or failed to load"}), 500
+# ==========================================
+# 4. Main Ingestion Endpoint (ESP32 -> Server)
+# ==========================================
+@app.route("/api/sensor-data", methods=["POST"])
+def ingest_sensor_data():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON body"}), 400
 
+    # Extract current incoming reading from ESP32
+    current_reading = {
+        "co2": float(data.get("co2", 0)),
+        "pm25": float(data.get("pm25", 0)),
+        "pm10": float(data.get("pm10", 0)),
+        "temperature": float(data.get("temperature", 0)),
+        "humidity": float(data.get("humidity", 0)),
+        "is_valid": int(data.get("is_valid", 1)),
+    }
+
+    pred_pm25, pred_pm10, pred_co2 = None, None, None
+
+    # Step A: Query past 15 records from DB to construct lag features
     try:
-        data = request.get_json()
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        # Check if incoming payload contains recent sensor logs array
-        if "logs" not in data or len(data["logs"]) < 16:
-            return (
-                jsonify(
-                    {
-                        "error": "Requires a 'logs' list containing at least 16 chronological sensor readings (t=0 down to t-15)."
-                    }
-                ),
-                400,
+        # Retrieve last 15 rows ordered chronologically
+        cur.execute(
+            """
+            SELECT co2, pm25, pm10, temperature, humidity, is_valid 
+            FROM sensor_logs 
+            ORDER BY timestamp DESC 
+            LIMIT 15
+        """
+        )
+        recent_history = cur.fetchall()
+        recent_history.reverse()  # Reverse to chronological order (oldest to newest)
+
+        # Step B: Run Random Forest Prediction if enough historical data exists
+        if len(recent_history) >= 15 and rf_model is not None:
+            features_df = build_features_from_history(
+                recent_history, current_reading
             )
+            predictions = rf_model.predict(features_df)[0]
 
-        # Build feature vector matching training schema
-        features_df = construct_feature_vector(data["logs"])
+            pred_pm25 = round(float(predictions[0]), 2)
+            pred_pm10 = round(float(predictions[1]), 2)
+            pred_co2 = round(float(predictions[2]), 2)
 
-        # Run prediction
-        predictions = rf_model.predict(features_df)[0]
+            # Check Telegram Alert thresholds
+            check_and_send_telegram_alert(pred_pm25, pred_pm10, pred_co2)
 
-        # Structure response
-        response = {
-            "status": "success",
-            "prediction_horizon": "15_minutes",
-            "predictions": {
-                "pm25": round(float(predictions[0]), 2),
-                "pm10": round(float(predictions[1]), 2),
-                "co2": round(float(predictions[2]), 2),
-            },
-        }
-        return jsonify(response), 200
+        # Step C: Insert current reading and predicted values into Database
+        cur.execute(
+            """
+            INSERT INTO sensor_logs 
+            (co2, pm25, pm10, temperature, humidity, is_valid, pred_pm25, pred_pm10, pred_co2, timestamp)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+        """,
+            (
+                current_reading["co2"],
+                current_reading["pm25"],
+                current_reading["pm10"],
+                current_reading["temperature"],
+                current_reading["humidity"],
+                current_reading["is_valid"],
+                pred_pm25,
+                pred_pm10,
+                pred_co2,
+            ),
+        )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return (
+            jsonify(
+                {
+                    "status": "success",
+                    "current": current_reading,
+                    "prediction_15min": {
+                        "pm25": pred_pm25,
+                        "pm10": pred_pm10,
+                        "co2": pred_co2,
+                    },
+                }
+            ),
+            201,
+        )
 
     except Exception as e:
+        print(f"Database/Ingestion Error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
