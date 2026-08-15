@@ -1,12 +1,15 @@
+import json
 import os
+import time
 from urllib.parse import urlparse
+from google import genai
 import joblib
 import numpy as np
 import pandas as pd
 import pymysql
 import pymysql.cursors
 import requests
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
@@ -25,9 +28,21 @@ except Exception as e:
 DATABASE_URL = os.getenv("DATABASE_URL")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# Initialize Gemini AI Client
+ai_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 SENSOR_COLS = ["co2", "pm25", "pm10", "temperature", "humidity", "is_valid"]
 LAGS = [0, 5, 10, 15]
+
+# In-memory AI advice cache (refreshes every 2 minutes to keep requests fast)
+cached_ai_response = {
+    "status_badge": "Optimal",
+    "analysis": "Air quality is currently stable and within healthy thresholds.",
+    "action": "Air quality is optimal. No action required.",
+    "last_updated": 0,
+}
 
 
 def get_db_connection():
@@ -56,11 +71,11 @@ def check_and_send_telegram_alert(pred_pm25, pred_pm10, pred_co2):
         return
 
     alerts = []
-    if pred_pm25 > 35.0:
+    if pred_pm25 and pred_pm25 > 35.0:
         alerts.append(f"• *PM2.5* predicted at `{pred_pm25:.1f} µg/m³` (Unhealthy)")
-    if pred_pm10 > 100.0:
+    if pred_pm10 and pred_pm10 > 100.0:
         alerts.append(f"• *PM10* predicted at `{pred_pm10:.1f} µg/m³` (Elevated)")
-    if pred_co2 > 1000.0:
+    if pred_co2 and pred_co2 > 1000.0:
         alerts.append(f"• *CO2* predicted at `{pred_co2:.0f} ppm` (Poor Ventilation)")
 
     if alerts:
@@ -86,7 +101,56 @@ def check_and_send_telegram_alert(pred_pm25, pred_pm10, pred_co2):
 
 
 # ==========================================
-# 3. Feature Vector Builder
+# 3. Dynamic Gemini AI Copilot
+# ==========================================
+def generate_ai_recommendation(current, pred_pm25, pred_pm10, pred_co2):
+    """Uses Gemini to generate real-time, context-aware indoor air advice."""
+    global cached_ai_response
+
+    # Reuse cached advice for 2 minutes (120s) to keep page loading instantaneous
+    if time.time() - cached_ai_response.get("last_updated", 0) < 120:
+        return cached_ai_response
+
+    if not ai_client:
+        is_bad = (pred_pm25 and pred_pm25 > 35) or (pred_co2 and pred_co2 > 1000)
+        return {
+            "status_badge": "Alert" if is_bad else "Optimal",
+            "analysis": "Telemetry monitored. Add GEMINI_API_KEY in Railway Variables for full AI advice.",
+            "action": "Open windows for ventilation or run air purifier." if is_bad else "Conditions are normal.",
+            "last_updated": time.time(),
+        }
+
+    prompt = f"""
+    You are an expert Indoor Environmental Quality AI Copilot for a smart building IoT system.
+    Analyze this telemetry data:
+    - Current Readings: PM2.5: {current.get('pm25', 0)} ug/m3, PM10: {current.get('pm10', 0)} ug/m3, CO2: {current.get('co2', 0)} ppm, Temp: {current.get('temperature', 0)}°C, Humidity: {current.get('humidity', 0)}%
+    - 15-Minute ML Forecast: Predicted PM2.5: {pred_pm25} ug/m3, Predicted PM10: {pred_pm10} ug/m3, Predicted CO2: {pred_co2} ppm
+
+    Provide a concise assessment in exactly this JSON format (no markdown code blocks, just raw JSON):
+    {{
+      "status_badge": "Safe" or "Moderate" or "Danger Warning",
+      "analysis": "A 1-2 sentence technical summary explaining what is happening or forecasted to happen based on temperature, humidity, CO2 and particulate levels.",
+      "action": "A specific, actionable instruction for the occupant (e.g., open windows, turn on HEPA purifier, adjust AC, turn on exhaust fan)."
+    }}
+    """
+
+    try:
+        response = ai_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
+        clean_text = response.text.replace("```json", "").replace("```", "").strip()
+        ai_data = json.loads(clean_text)
+        ai_data["last_updated"] = time.time()
+        cached_ai_response = ai_data
+        return ai_data
+    except Exception as e:
+        print(f"AI Generation Error: {e}")
+        return cached_ai_response
+
+
+# ==========================================
+# 4. Feature Vector Builder
 # ==========================================
 def build_features_from_history(recent_rows, current_reading):
     """Combines previous MySQL rows with the live incoming reading
@@ -109,8 +173,16 @@ def build_features_from_history(recent_rows, current_reading):
 
 
 # ==========================================
-# 4. Main Ingestion Endpoint (ESP32 / Postman -> Server)
+# 5. Routes
 # ==========================================
+
+# 5.1 Render HTML Dashboard
+@app.route("/", methods=["GET"])
+def dashboard():
+    return render_template("index.html")
+
+
+# 5.2 Sensor Data Ingestion (ESP32 -> Railway DB -> Prediction)
 @app.route("/api/sensor-data", methods=["POST"])
 def ingest_sensor_data():
     data = request.get_json()
@@ -199,9 +271,50 @@ def ingest_sensor_data():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/", methods=["GET"])
-def health_check():
-    return jsonify({"status": "running", "service": "Air Quality Predictor"}), 200
+# 5.3 Dashboard Telemetry & AI Advice Feed
+@app.route("/api/dashboard-data", methods=["GET"])
+def get_dashboard_data():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, timestamp, co2, pm25, pm10, temperature, humidity,
+                       pred_pm25, pred_pm10, pred_co2
+                FROM sensor_logs
+                ORDER BY timestamp DESC
+                LIMIT 30
+            """
+            )
+            rows = cur.fetchall()
+        conn.close()
+
+        rows.reverse()
+        latest = rows[-1] if rows else {}
+
+        # Generate contextual AI Copilot advice
+        ai_advice = generate_ai_recommendation(
+            current={
+                "pm25": latest.get("pm25", 0),
+                "pm10": latest.get("pm10", 0),
+                "co2": latest.get("co2", 0),
+                "temperature": latest.get("temperature", 0),
+                "humidity": latest.get("humidity", 0),
+            },
+            pred_pm25=latest.get("pred_pm25", 0),
+            pred_pm10=latest.get("pred_pm10", 0),
+            pred_co2=latest.get("pred_co2", 0),
+        )
+
+        return (
+            jsonify(
+                {"status": "success", "data": rows, "ai_advice": ai_advice}
+            ),
+            200,
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
