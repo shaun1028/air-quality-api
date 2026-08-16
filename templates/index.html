@@ -9,206 +9,212 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-3 sm:p-6 md:p-8 font-sans antialiased selection:bg-indigo-500 selection:text-white">
 
+  <!-- Added <main> for Accessibility (Landmark) -->
   <main class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
     <!-- Header Section -->
     <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/90 backdrop-blur p-4 sm:p-6 rounded-2xl border border-slate-700/80 shadow-lg">
       <div class="space-y-1">
         <div class="flex items-center gap-2">
-          <span id="healthDot" class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
           <h1 class="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white">Smart Air Quality Dashboard</h1>
         </div>
-        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-          <p class="text-slate-400 text-xs sm:text-sm">Real-time Telemetry & ML Predictive Analysis</p>
-          <span class="hidden sm:inline text-slate-600 text-xs">|</span>
-          <!-- Sensor Health Tracker -->
-          <span id="sensorHealthStatus" class="text-xs font-semibold text-emerald-400 transition-colors">🟢 Live (Waiting for data...)</span>
-        </div>
+        <p class="text-slate-400 text-xs sm:text-sm">Real-time Telemetry & 15-Minute ML Predictive Analysis</p>
       </div>
 
+      <!-- User Control & Hierarchy: Primary vs Secondary Buttons, Focus Rings for Accessibility -->
       <div class="flex items-center gap-2.5 w-full sm:w-auto">
-        <button onclick="openHistoryModal()" class="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900 text-white rounded-xl text-xs sm:text-sm font-medium transition-all shadow-md flex items-center gap-2">
-          <span>📊</span><span>History Log</span>
+        <button onclick="openHistoryModal()" aria-label="Open History Log" class="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900 active:scale-95 text-white rounded-xl text-xs sm:text-sm font-medium transition-all shadow-md flex items-center gap-2">
+          <span aria-hidden="true">📊</span>
+          <span>History Log</span>
         </button>
-        <button id="refreshBtn" onclick="handleManualRefresh()" class="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-slate-700 hover:bg-slate-600 focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-900 text-slate-200 rounded-xl text-xs sm:text-sm font-medium transition-all border border-slate-600/50 flex items-center gap-2">
-          <span id="refreshIcon">🔄</span><span id="refreshText">Refresh</span>
+        <button id="refreshBtn" onclick="handleManualRefresh()" aria-label="Refresh Dashboard Data" class="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-slate-700 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-900 active:scale-95 text-slate-200 rounded-xl text-xs sm:text-sm font-medium transition-all border border-slate-600/50 flex items-center gap-2">
+          <span id="refreshIcon" aria-hidden="true">🔄</span>
+          <span id="refreshText">Refresh</span>
         </button>
       </div>
     </header>
 
-    <!-- AI Copilot Advisor Card -->
-    <section id="aiAdvisorCard" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 shadow-lg bg-slate-800 border-slate-700">
+    <!-- AI Copilot Advisor Card: aria-live="polite" announces changes to screen readers -->
+    <section id="aiAdvisorCard" aria-live="polite" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 shadow-lg bg-slate-800 border-slate-700 focus-within:ring-2 focus-within:ring-indigo-500">
       <div class="flex items-start gap-3 sm:gap-4">
-        <div id="aiIcon" class="text-2xl sm:text-3xl p-2 bg-slate-900/50 rounded-xl border border-slate-700/60 flex-shrink-0">🤖</div>
+        <div id="aiIcon" class="text-2xl sm:text-3xl p-2 bg-slate-900/50 rounded-xl border border-slate-700/60 flex-shrink-0" aria-hidden="true">🤖</div>
         <div class="flex-1 min-w-0">
           <div class="flex flex-wrap items-center gap-2 mb-1">
             <h2 class="text-base sm:text-lg font-bold text-white">AI Health & Safety Copilot</h2>
-            <span id="aiStatusBadge" class="text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Safe</span>
+            <span id="aiStatusBadge" class="text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              Safe Air Quality
+            </span>
           </div>
-          <p id="aiAnalysisText" class="text-slate-300 text-xs sm:text-sm leading-relaxed">Analyzing incoming sensor vectors...</p>
+          <p id="aiAnalysisText" class="text-slate-300 text-xs sm:text-sm leading-relaxed">Analyzing incoming sensor vectors and 15-minute ML forecast...</p>
+          
           <div class="mt-3 bg-slate-900/80 p-3 sm:p-3.5 rounded-xl border border-slate-700/60">
             <span class="text-[10px] sm:text-xs font-semibold text-indigo-400 uppercase tracking-wider block mb-0.5">Recommended Action</span>
-            <p id="aiActionPrompt" class="text-xs sm:text-sm text-slate-100 font-medium leading-normal">Air quality is optimal.</p>
+            <p id="aiActionPrompt" class="text-xs sm:text-sm text-slate-100 font-medium leading-normal">Air quality is currently optimal. No corrective action required.</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Top KPI Cards Grid -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      <!-- Malaysia API Score Hero Card -->
-      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-600 shadow-lg flex flex-col justify-between relative overflow-hidden group">
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" aria-label="Key Performance Indicators">
+
+      <!-- Malaysia API Score Hero Card (Visual Hierarchy Focus) -->
+      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-600 shadow-lg flex flex-col justify-between hover:border-slate-400 transition-colors relative overflow-hidden group">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
         <div class="relative z-10">
           <div class="flex justify-between items-center mb-1">
             <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Malaysia API (IPU)</span>
             <span id="apiBadge" class="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">Baik</span>
           </div>
-          <div class="my-2"><span id="apiValue" class="text-4xl sm:text-5xl font-black text-white tracking-tight">--</span></div>
+          <div class="my-2 flex items-baseline gap-2">
+            <span id="apiValue" class="text-4xl sm:text-5xl font-black text-white tracking-tight">--</span>
+          </div>
         </div>
+        
         <div class="relative z-10 mt-2 pt-2 border-t border-slate-700/60">
-          <div class="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden flex">
-            <div class="bg-blue-500 w-[10%]"></div><div class="bg-emerald-500 w-[10%]"></div><div class="bg-amber-500 w-[20%]"></div><div class="bg-red-500 w-[20%]"></div><div class="bg-purple-600 w-[40%]"></div>
+          <div class="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden flex" aria-hidden="true">
+            <div class="bg-blue-500 w-[10%]"></div><div class="bg-emerald-500 w-[10%]"></div>
+            <div class="bg-amber-500 w-[20%]"></div><div class="bg-red-500 w-[20%]"></div>
+            <div class="bg-purple-600 w-[40%]"></div>
+          </div>
+          <div class="flex justify-between text-[9px] text-slate-400 mt-1 font-mono" aria-hidden="true">
+            <span>0 Good</span><span>100 Unhealthy</span><span>300+ Haz</span>
           </div>
         </div>
       </div>
 
-      <!-- Sensor Cards with High/Low Context -->
-      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-md flex flex-col justify-between">
+      <!-- Sensor Cards (Clarity & Consistency) -->
+      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-md flex flex-col justify-between hover:border-slate-500 transition-colors">
         <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">PM2.5 (Fine)</span>
         <div class="flex items-baseline justify-between my-2">
           <span id="currentPm25" class="text-2xl sm:text-3xl font-bold text-sky-400">--</span>
-          <span id="forecastPm25" class="text-[11px] text-sky-300 bg-sky-950/70 border border-sky-700/50 px-2 py-0.5 rounded-lg">15m: --</span>
+          <span id="forecastPm25" class="text-[11px] text-sky-300 bg-sky-950/70 border border-sky-700/50 px-2 py-0.5 rounded-lg" title="15 Minute Forecast">15m: --</span>
         </div>
-        <div class="flex justify-between items-center mt-1 border-t border-slate-700/50 pt-2">
-          <span class="text-[10px] sm:text-[11px] text-slate-500">µg/m³</span>
-          <span id="pm25HL" class="text-[10px] sm:text-[11px] font-medium text-slate-400 bg-slate-900/50 px-2 py-0.5 rounded">H: -- | L: --</span>
-        </div>
+        <span class="text-[10px] sm:text-[11px] text-slate-500">µg/m³ concentration</span>
       </div>
 
-      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-md flex flex-col justify-between">
+      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-md flex flex-col justify-between hover:border-slate-500 transition-colors">
         <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">PM10 (Coarse)</span>
         <div class="flex items-baseline justify-between my-2">
           <span id="currentPm10" class="text-2xl sm:text-3xl font-bold text-teal-400">--</span>
-          <span id="forecastPm10" class="text-[11px] text-teal-300 bg-teal-950/70 border border-teal-700/50 px-2 py-0.5 rounded-lg">15m: --</span>
+          <span id="forecastPm10" class="text-[11px] text-teal-300 bg-teal-950/70 border border-teal-700/50 px-2 py-0.5 rounded-lg" title="15 Minute Forecast">15m: --</span>
         </div>
-        <div class="flex justify-between items-center mt-1 border-t border-slate-700/50 pt-2">
-          <span class="text-[10px] sm:text-[11px] text-slate-500">µg/m³</span>
-          <span id="pm10HL" class="text-[10px] sm:text-[11px] font-medium text-slate-400 bg-slate-900/50 px-2 py-0.5 rounded">H: -- | L: --</span>
-        </div>
+        <span class="text-[10px] sm:text-[11px] text-slate-500">µg/m³ concentration</span>
       </div>
 
-      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-md flex flex-col justify-between">
+      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-md flex flex-col justify-between hover:border-slate-500 transition-colors">
         <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Carbon Dioxide (CO₂)</span>
         <div class="flex items-baseline justify-between my-2">
           <span id="currentCo2" class="text-2xl sm:text-3xl font-bold text-purple-400">--</span>
-          <span id="forecastCo2" class="text-[11px] text-amber-300 bg-amber-950/70 border border-amber-700/50 px-2 py-0.5 rounded-lg">15m: --</span>
+          <span id="forecastCo2" class="text-[11px] text-amber-300 bg-amber-950/70 border border-amber-700/50 px-2 py-0.5 rounded-lg" title="15 Minute Forecast">15m: --</span>
         </div>
-        <div class="flex justify-between items-center mt-1 border-t border-slate-700/50 pt-2">
-          <span class="text-[10px] sm:text-[11px] text-slate-500">ppm</span>
-          <span id="co2HL" class="text-[10px] sm:text-[11px] font-medium text-slate-400 bg-slate-900/50 px-2 py-0.5 rounded">H: -- | L: --</span>
-        </div>
+        <span class="text-[10px] sm:text-[11px] text-slate-500">ppm concentration</span>
       </div>
     </section>
 
-    <!-- Chart Controls -->
-    <div class="flex flex-col sm:flex-row justify-between items-center bg-slate-800/50 p-2 sm:p-3 rounded-xl border border-slate-700/50 gap-3">
-      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Chart View Range</span>
-      <div class="flex bg-slate-900 rounded-lg p-1 border border-slate-700 w-full sm:w-auto">
-        <button id="btn-1h" onclick="setChartRange('1h')" class="time-btn flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-md text-slate-400 transition-colors">1 Hour</button>
-        <button id="btn-today" onclick="setChartRange('today')" class="time-btn flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-md text-slate-400 transition-colors">Today (Reset at 12AM)</button>
-        <button id="btn-24h" onclick="setChartRange('24h')" class="time-btn flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-md bg-indigo-600 text-white transition-colors shadow-sm">Last 24h</button>
-      </div>
-    </div>
-
     <!-- Multi-Graph Grid -->
-    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col">
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6" aria-label="Data Visualizations">
+      
+      <!-- Graph 1 -->
+      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col hover:border-slate-500 transition-colors">
         <div class="flex justify-between items-center mb-3">
-          <h3 class="text-sm font-semibold text-white">PM2.5 Trajectory</h3>
+          <h3 class="text-sm sm:text-base font-semibold text-white">PM2.5 Trajectory</h3>
           <span class="text-[10px] text-slate-400 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-700/60">Dashed = 15m Pred</span>
         </div>
-        <div class="relative h-56 sm:h-64 w-full"><canvas id="pm25Chart"></canvas></div>
+        <div class="relative h-56 sm:h-64 w-full" aria-hidden="true"><canvas id="pm25Chart"></canvas></div>
       </div>
 
-      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col">
+      <!-- Graph 2 -->
+      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col hover:border-slate-500 transition-colors">
         <div class="flex justify-between items-center mb-3">
-          <h3 class="text-sm font-semibold text-white">CO₂ Level</h3>
+          <h3 class="text-sm sm:text-base font-semibold text-white">CO₂ Level</h3>
           <span class="text-[10px] text-slate-400 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-700/60">Dashed = 15m Pred</span>
         </div>
-        <div class="relative h-56 sm:h-64 w-full"><canvas id="co2Chart"></canvas></div>
+        <div class="relative h-56 sm:h-64 w-full" aria-hidden="true"><canvas id="co2Chart"></canvas></div>
       </div>
 
-      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col">
+      <!-- Graph 3 -->
+      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col hover:border-slate-500 transition-colors">
         <div class="flex justify-between items-center mb-3">
-          <h3 class="text-sm font-semibold text-white">PM10 Coarse Particulate</h3>
+          <h3 class="text-sm sm:text-base font-semibold text-white">PM10 Coarse Particulate</h3>
           <span class="text-[10px] text-teal-400 bg-teal-950/60 px-2 py-0.5 rounded border border-teal-700/50">µg/m³</span>
         </div>
-        <div class="relative h-56 sm:h-64 w-full"><canvas id="pm10Chart"></canvas></div>
+        <div class="relative h-56 sm:h-64 w-full" aria-hidden="true"><canvas id="pm10Chart"></canvas></div>
       </div>
 
-      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col">
+      <!-- Graph 4 -->
+      <div class="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col hover:border-slate-500 transition-colors">
         <div class="flex justify-between items-center mb-3">
-          <h3 class="text-sm font-semibold text-white">Ambient Temp & Humidity</h3>
+          <h3 class="text-sm sm:text-base font-semibold text-white">Ambient Temp & Humidity</h3>
           <span class="text-[10px] text-orange-400 bg-orange-950/60 px-2 py-0.5 rounded border border-orange-700/50">°C & %</span>
         </div>
-        <div class="relative h-56 sm:h-64 w-full"><canvas id="envChart"></canvas></div>
+        <div class="relative h-56 sm:h-64 w-full" aria-hidden="true"><canvas id="envChart"></canvas></div>
       </div>
+
     </section>
   </main>
 
-  <!-- History Modal -->
-  <div id="historyModal" class="fixed inset-0 bg-slate-900/95 backdrop-blur-sm z-50 hidden flex-col items-center justify-center p-2 sm:p-4 transition-opacity">
+  <!-- History Modal (Accessibility: role="dialog" & Esc key support) -->
+  <div id="historyModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" class="fixed inset-0 bg-slate-900/95 backdrop-blur-sm z-50 hidden flex-col items-center justify-center p-2 sm:p-4 transition-opacity">
     <div class="bg-slate-800 border border-slate-600 rounded-2xl w-full max-w-6xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden ring-1 ring-white/10">
       
+      <!-- Modal Header -->
       <div class="p-4 sm:p-5 border-b border-slate-700 bg-slate-800/90 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <h2 id="modalTitle" class="text-lg font-bold text-white flex items-center gap-2">
             <span>Database History Log</span>
-            <span id="tableLoadingSpinner" class="hidden h-4 w-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></span>
+            <!-- Feedback: Spinner -->
+            <span id="tableLoadingSpinner" class="hidden h-4 w-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" aria-label="Loading data"></span>
           </h2>
-          <p class="text-xs text-slate-400 mt-1">Browse, search, and export records</p>
+          <p class="text-xs text-slate-400 mt-1">Browse and search historical records</p>
         </div>
         
-        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <!-- CSV Export Button -->
-          <button onclick="downloadCSV()" class="bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:ring-2 focus:ring-emerald-500 flex items-center gap-2">
-            📥 Export CSV
-          </button>
-          
-          <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg overflow-hidden flex-1 sm:flex-none focus-within:border-indigo-500 transition-all ml-0 sm:ml-2">
-            <input type="number" id="searchIdInput" placeholder="Jump to ID..." class="bg-transparent text-sm text-white px-3 py-2 outline-none w-full sm:w-32 placeholder-slate-500">
-            <button onclick="clearSearch()" id="clearSearchBtn" class="hidden px-2 text-slate-400 hover:text-white">&times;</button>
-            <button onclick="handleSearch()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 text-sm font-medium">Find</button>
+        <!-- User Control: Search Bar with Clear Button -->
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg overflow-hidden flex-1 sm:flex-none focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
+            <input type="number" id="searchIdInput" placeholder="Jump to ID (e.g. 500)" aria-label="Search by ID" class="bg-transparent text-sm text-white px-3 py-2 outline-none w-full sm:w-40 placeholder-slate-500">
+            <!-- Clear Button -->
+            <button onclick="clearSearch()" id="clearSearchBtn" aria-label="Clear search" class="hidden px-2 text-slate-400 hover:text-white transition-colors">&times;</button>
+            <button onclick="handleSearch()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 text-sm font-medium transition-colors focus:outline-none">Find</button>
           </div>
-          <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-white px-2 py-1 text-3xl leading-none ml-2 rounded-lg">&times;</button>
+          <!-- User Control: Close Button -->
+          <button onclick="closeHistoryModal()" aria-label="Close modal" class="text-slate-400 hover:text-white p-2 text-2xl leading-none focus:outline-none focus:ring-2 focus:ring-slate-400 rounded-lg">&times;</button>
         </div>
       </div>
 
+      <!-- Table Container -->
       <div class="overflow-x-auto overflow-y-auto flex-1 bg-slate-900/50">
         <table class="w-full text-left text-xs text-slate-300 whitespace-nowrap">
           <thead class="bg-slate-800 uppercase text-slate-400 border-b border-slate-600 sticky top-0 shadow-sm z-10">
             <tr>
-              <th class="p-3 font-semibold">Record ID</th>
-              <th class="p-3 font-semibold">Timestamp</th>
-              <th class="p-3 font-semibold">API Score</th>
-              <th class="p-3 font-semibold">PM2.5</th>
-              <th class="p-3 font-semibold">PM10</th>
-              <th class="p-3 font-semibold">CO₂</th>
-              <th class="p-3 font-semibold">Temp</th>
-              <th class="p-3 font-semibold">Humidity</th>
+              <th scope="col" class="p-3 font-semibold">Record ID</th>
+              <th scope="col" class="p-3 font-semibold">Timestamp</th>
+              <th scope="col" class="p-3 font-semibold">API Score</th>
+              <th scope="col" class="p-3 font-semibold">PM2.5</th>
+              <th scope="col" class="p-3 font-semibold">PM10</th>
+              <th scope="col" class="p-3 font-semibold">CO₂</th>
+              <th scope="col" class="p-3 font-semibold">Temp</th>
+              <th scope="col" class="p-3 font-semibold">Humidity</th>
             </tr>
           </thead>
           <tbody id="historyTableBody" class="divide-y divide-slate-700/60 font-mono">
+            <!-- Rows injected here -->
           </tbody>
         </table>
       </div>
 
+      <!-- Modal Footer Pagination (Feedback & Control) -->
       <div class="p-3 sm:p-4 border-t border-slate-700 bg-slate-800/90 flex justify-between items-center">
-        <div class="text-xs font-medium text-slate-400" id="totalRecordsText">Total Records: --</div>
-        <nav class="flex items-center gap-2 sm:gap-4">
-          <button onclick="changePage(-1)" id="prevBtn" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition">&larr; Prev</button>
-          <span class="text-sm font-medium text-slate-200" id="pageIndicator">Page 1</span>
-          <button onclick="changePage(1)" id="nextBtn" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition">Next &rarr;</button>
+        <div class="text-xs font-medium text-slate-400" id="totalRecordsText" aria-live="polite">Total Records: --</div>
+        <nav class="flex items-center gap-2 sm:gap-4" aria-label="Pagination">
+          <button onclick="changePage(-1)" id="prevBtn" aria-label="Previous Page" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 focus:ring-2 focus:ring-slate-400 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition focus:outline-none">
+            &larr; <span class="hidden sm:inline">Prev</span>
+          </button>
+          <span class="text-sm font-medium text-slate-200" id="pageIndicator" aria-live="polite">Page 1</span>
+          <button onclick="changePage(1)" id="nextBtn" aria-label="Next Page" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 focus:ring-2 focus:ring-slate-400 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition focus:outline-none">
+            <span class="hidden sm:inline">Next</span> &rarr;
+          </button>
         </nav>
       </div>
     </div>
@@ -216,15 +222,11 @@
 
   <script>
     let pm25Chart, co2Chart, pm10Chart, envChart;
-    let localHistoryCache = []; 
-    // Default chart range is now 24 Hours so data always shows up immediately!
-    let currentChartRange = '24h'; 
-    let lastSensorTimestamp = Date.now();
-    let currentPage = 1, currentSearchId = null;
+    let currentPage = 1, currentSearchId = null, localHistoryCache = []; 
 
-    // --- Helper Functions ---
+    // Malaysian Air Pollutant Index (API / IPU) Calculation
     function calculateMalaysiaApi(pm25) {
-      if (isNaN(pm25)) return 0;
+      if (pm25 === undefined || pm25 === null || isNaN(pm25)) return 0;
       let api = 0;
       if (pm25 <= 12) api = Math.round((50 / 12) * pm25);
       else if (pm25 <= 35.4) api = Math.round(50 + ((100 - 50) / (35.4 - 12)) * (pm25 - 12));
@@ -239,112 +241,105 @@
       if (api <= 50) return { label: "Baik (Good)", badge: "bg-blue-500/20 text-blue-300 border border-blue-500/30" };
       if (api <= 100) return { label: "Sederhana (Moderate)", badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" };
       if (api <= 200) return { label: "Tidak Sihat (Unhealthy)", badge: "bg-amber-500/20 text-amber-300 border border-amber-500/30" };
-      if (api <= 300) return { label: "Sangat Tidak Sihat (V. Unhealthy)", badge: "bg-rose-500/20 text-rose-300 border border-rose-500/30" };
+      if (api <= 300) return { label: "Sangat Tidak Sihat (Very Unhealthy)", badge: "bg-rose-500/20 text-rose-300 border border-rose-500/30" };
       return { label: "Berbahaya (Hazardous)", badge: "bg-purple-500/20 text-purple-300 border border-purple-500/30" };
     }
 
-    // --- Chart Initialization (Grid Lines explicitly set to #334155) ---
+// Chart Configuration Helper (Restored Grid Lines)
     function getResponsiveChartOptions(yTitle, yColor) {
       return {
-        responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { position: 'top', labels: { color: '#cbd5e1', boxWidth: 8, font: { size: 10 } } } },
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'top', labels: { color: '#cbd5e1', boxWidth: 8, font: { size: 11, family: "ui-sans-serif, system-ui, sans-serif" } } } },
         scales: {
-          x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 }, autoSkip: true, maxTicksLimit: 6 } },
-          y: { title: yTitle ? { display: true, text: yTitle, color: yColor, font: { size: 10, weight: 'bold' } } : { display: false }, grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+          x: { 
+            // Changed from 0.04 opacity to a visible slate-700 hex color
+            grid: { color: '#334155' }, 
+            ticks: { color: '#94a3b8', font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } 
+          },
+          y: { 
+            title: yTitle ? { display: true, text: yTitle, color: yColor, font: { size: 10, weight: 'bold' } } : { display: false }, 
+            // Restored visible grid lines here too
+            grid: { color: '#334155' }, 
+            ticks: { color: '#94a3b8', font: { size: 10 } } 
+          }
         }
       };
     }
 
+    // Initialize all 4 charts (Added borderWidth: 2 so the data lines are bold and clear)
     function initCharts() {
-      // Border width set to 2 so data lines are thick and visible
-      const common = { tension: 0.3, pointRadius: 1.5, pointHoverRadius: 4, borderWidth: 2 };
-      pm25Chart = new Chart(document.getElementById('pm25Chart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: 'Actual PM2.5', borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', data: [], fill: true, ...common }, { label: 'Pred PM2.5', borderColor: '#f43f5e', borderDash: [4, 4], data: [], fill: false, ...common }]}, options: getResponsiveChartOptions('µg/m³', '#38bdf8') });
-      co2Chart = new Chart(document.getElementById('co2Chart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: 'Actual CO₂', borderColor: '#c084fc', backgroundColor: 'rgba(192, 132, 252, 0.1)', data: [], fill: true, ...common }, { label: 'Pred CO₂', borderColor: '#fbbf24', borderDash: [4, 4], data: [], fill: false, ...common }]}, options: getResponsiveChartOptions('ppm', '#c084fc') });
-      pm10Chart = new Chart(document.getElementById('pm10Chart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: 'PM10', borderColor: '#2dd4bf', backgroundColor: 'rgba(45, 212, 191, 0.1)', data: [], fill: true, ...common }, { label: 'Pred PM10', borderColor: '#fb7185', borderDash: [4, 4], data: [], fill: false, ...common }]}, options: getResponsiveChartOptions('µg/m³', '#2dd4bf') });
-      envChart = new Chart(document.getElementById('envChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: 'Temp (°C)', borderColor: '#fb923c', data: [], yAxisID: 'y', ...common }, { label: 'Humidity (%)', borderColor: '#818cf8', data: [], yAxisID: 'y1', ...common }]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { position: 'top', labels: { color: '#cbd5e1', boxWidth: 8, font: { size: 10 } } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 }, autoSkip: true, maxTicksLimit: 6 } }, y: { position: 'left', title: { display: true, text: '°C', color: '#fb923c', font: { size: 10 } }, grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 } } }, y1: { position: 'right', title: { display: true, text: '%', color: '#818cf8', font: { size: 10 } }, grid: { drawOnChartArea: false }, ticks: { color: '#94a3b8', font: { size: 10 } } } } });
-    }
-
-    // --- Sensor Health Engine ---
-    setInterval(() => {
-      const diffSecs = Math.floor((Date.now() - lastSensorTimestamp) / 1000);
-      const statusEl = document.getElementById('sensorHealthStatus');
-      const dotEl = document.getElementById('healthDot');
+      // Added borderWidth: 2 to ensure the actual data lines draw correctly
+      const commonSettings = { tension: 0.3, pointRadius: 2, pointHoverRadius: 5, borderWidth: 2 };
       
-      if (diffSecs > 120) {
-        statusEl.innerHTML = `🔴 Offline (No data for ${Math.floor(diffSecs/60)} mins)`;
-        statusEl.className = "text-xs font-semibold text-rose-400";
-        dotEl.className = "inline-block w-2.5 h-2.5 rounded-full bg-rose-500";
-      } else {
-        statusEl.innerHTML = `🟢 Live (Updated ${diffSecs}s ago)`;
-        statusEl.className = "text-xs font-semibold text-emerald-400";
-        dotEl.className = "inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
-      }
-    }, 1000);
-
-    // --- Timeframe & Charts Engine ---
-    function setChartRange(range) {
-      currentChartRange = range;
-      document.querySelectorAll('.time-btn').forEach(b => {
-        b.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
-        b.classList.add('text-slate-400');
+      pm25Chart = new Chart(document.getElementById('pm25Chart').getContext('2d'), { 
+        type: 'line', data: { labels: [], datasets: [ 
+          { label: 'Actual PM2.5', borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.12)', data: [], fill: true, ...commonSettings }, 
+          { label: 'Pred PM2.5', borderColor: '#f43f5e', borderDash: [4, 4], data: [], fill: false, ...commonSettings }
+        ]}, options: getResponsiveChartOptions('µg/m³', '#38bdf8') 
       });
-      const activeBtn = document.getElementById(`btn-${range}`);
-      activeBtn.classList.remove('text-slate-400');
-      activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
-      updateChartsFromCache();
-    }
-
-    function updateChartsFromCache() {
-      if (!localHistoryCache.length) return;
       
-      let filteredData = localHistoryCache;
-      const now = Date.now();
-
-      if (currentChartRange === 'today') {
-        const todayString = new Date().toLocaleDateString();
-        filteredData = localHistoryCache.filter(d => new Date(d.timestamp).toLocaleDateString() === todayString);
-      } else if (currentChartRange === '1h') {
-        filteredData = localHistoryCache.filter(d => (now - new Date(d.timestamp).getTime()) <= 3600000);
-      } else if (currentChartRange === '24h') {
-        filteredData = localHistoryCache.filter(d => (now - new Date(d.timestamp).getTime()) <= 86400000);
-      }
-
-      // Update High/Low Context (Based on Today's data specifically)
-      const todaysData = localHistoryCache.filter(d => new Date(d.timestamp).toLocaleDateString() === new Date().toLocaleDateString());
-      if(todaysData.length > 0) {
-        const pm25s = todaysData.map(d=>d.pm25).filter(n=>!isNaN(n));
-        const pm10s = todaysData.map(d=>d.pm10).filter(n=>!isNaN(n));
-        const co2s = todaysData.map(d=>d.co2).filter(n=>!isNaN(n));
-        if(pm25s.length) document.getElementById('pm25HL').innerText = `H: ${Math.max(...pm25s)} | L: ${Math.min(...pm25s)}`;
-        if(pm10s.length) document.getElementById('pm10HL').innerText = `H: ${Math.max(...pm10s)} | L: ${Math.min(...pm10s)}`;
-        if(co2s.length) document.getElementById('co2HL').innerText = `H: ${Math.max(...co2s)} | L: ${Math.min(...co2s)}`;
-      }
-
-      const timestamps = filteredData.map(d => new Date(d.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-      pm25Chart.data.labels = timestamps; pm25Chart.data.datasets[0].data = filteredData.map(d => d.pm25); pm25Chart.data.datasets[1].data = filteredData.map(d => d.pred_pm25); pm25Chart.update();
-      co2Chart.data.labels = timestamps; co2Chart.data.datasets[0].data = filteredData.map(d => d.co2); co2Chart.data.datasets[1].data = filteredData.map(d => d.pred_co2); co2Chart.update();
-      pm10Chart.data.labels = timestamps; pm10Chart.data.datasets[0].data = filteredData.map(d => d.pm10); pm10Chart.data.datasets[1].data = filteredData.map(d => d.pred_pm10); pm10Chart.update();
-      envChart.data.labels = timestamps; envChart.data.datasets[0].data = filteredData.map(d => d.temperature); envChart.data.datasets[1].data = filteredData.map(d => d.humidity); envChart.update();
+      co2Chart = new Chart(document.getElementById('co2Chart').getContext('2d'), { 
+        type: 'line', data: { labels: [], datasets: [ 
+          { label: 'Actual CO₂', borderColor: '#c084fc', backgroundColor: 'rgba(192, 132, 252, 0.12)', data: [], fill: true, ...commonSettings }, 
+          { label: 'Pred CO₂', borderColor: '#fbbf24', borderDash: [4, 4], data: [], fill: false, ...commonSettings }
+        ]}, options: getResponsiveChartOptions('ppm', '#c084fc') 
+      });
+      
+      pm10Chart = new Chart(document.getElementById('pm10Chart').getContext('2d'), { 
+        type: 'line', data: { labels: [], datasets: [ 
+          { label: 'PM10 Coarse', borderColor: '#2dd4bf', backgroundColor: 'rgba(45, 212, 191, 0.12)', data: [], fill: true, ...commonSettings }, 
+          { label: 'Pred PM10', borderColor: '#fb7185', borderDash: [4, 4], data: [], fill: false, ...commonSettings }
+        ]}, options: getResponsiveChartOptions('µg/m³', '#2dd4bf') 
+      });
+      
+      envChart = new Chart(document.getElementById('envChart').getContext('2d'), { 
+        type: 'line', data: { labels: [], datasets: [ 
+          { label: 'Temp (°C)', borderColor: '#fb923c', data: [], yAxisID: 'y', ...commonSettings }, 
+          { label: 'Humidity (%)', borderColor: '#818cf8', data: [], yAxisID: 'y1', ...commonSettings }
+        ]},
+        options: { 
+          responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, 
+          plugins: { legend: { position: 'top', labels: { color: '#cbd5e1', boxWidth: 8, font: { size: 11 } } } }, 
+          scales: { 
+            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } }, 
+            y: { position: 'left', title: { display: true, text: '°C', color: '#fb923c', font: { size: 10, weight: 'bold' } }, grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 } } }, 
+            y1: { position: 'right', title: { display: true, text: '%', color: '#818cf8', font: { size: 10, weight: 'bold' } }, grid: { drawOnChartArea: false }, ticks: { color: '#94a3b8', font: { size: 10 } } } 
+          } 
+        } 
+      });
     }
 
+    // Feedback: UI wrapper for manual refreshing
     async function handleManualRefresh() {
+      const btn = document.getElementById('refreshBtn');
       const icon = document.getElementById('refreshIcon');
       const text = document.getElementById('refreshText');
-      icon.classList.add('animate-spin'); text.innerText = 'Refreshing...';
+      
+      icon.classList.add('animate-spin');
+      text.innerText = 'Refreshing...';
+      btn.disabled = true;
+
       await fetchDashboardData();
-      setTimeout(() => { icon.classList.remove('animate-spin'); text.innerText = 'Refresh'; }, 500);
+
+      // Ensure spinner shows for at least 500ms for visual feedback clarity
+      setTimeout(() => {
+        icon.classList.remove('animate-spin');
+        text.innerText = 'Refresh';
+        btn.disabled = false;
+      }, 500);
     }
 
-    // --- Main Fetch API ---
+    // Main API Fetch
     async function fetchDashboardData() {
       try {
         const response = await fetch('/api/dashboard-data');
         const result = await response.json();
         if (result.status !== 'success' || !result.data || !result.data.length) return;
 
-        localHistoryCache = result.data; 
-        const latest = localHistoryCache[localHistoryCache.length - 1];
-        lastSensorTimestamp = new Date(latest.timestamp).getTime();
+        const data = result.data;
+        localHistoryCache = data; 
+        const latest = data[data.length - 1];
 
         const latestApi = calculateMalaysiaApi(latest.pm25);
         document.getElementById('apiValue').innerText = latestApi;
@@ -365,10 +360,11 @@
           const card = document.getElementById('aiAdvisorCard');
           const badge = document.getElementById('aiStatusBadge');
           const icon = document.getElementById('aiIcon');
+
           badge.innerText = ai.status_badge || 'Monitored';
           document.getElementById('aiAnalysisText').innerText = ai.analysis || 'Analyzing...';
           document.getElementById('aiActionPrompt').innerText = ai.action || 'No action needed.';
-          
+
           if ((ai.status_badge || '').toLowerCase().includes('danger') || (ai.status_badge || '').toLowerCase().includes('alert')) {
             card.className = "p-4 sm:p-6 rounded-2xl border transition-all duration-300 shadow-lg bg-rose-950/30 border-rose-600/50 hover:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500";
             badge.className = "text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30";
@@ -384,64 +380,64 @@
           }
         }
 
-        updateChartsFromCache();
-        if(!document.getElementById('historyModal').classList.contains('hidden')) loadTableData();
+        const timestamps = data.map(d => new Date(d.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+        pm25Chart.data.labels = timestamps; pm25Chart.data.datasets[0].data = data.map(d => d.pm25); pm25Chart.data.datasets[1].data = data.map(d => d.pred_pm25); pm25Chart.update();
+        co2Chart.data.labels = timestamps; co2Chart.data.datasets[0].data = data.map(d => d.co2); co2Chart.data.datasets[1].data = data.map(d => d.pred_co2); co2Chart.update();
+        pm10Chart.data.labels = timestamps; pm10Chart.data.datasets[0].data = data.map(d => d.pm10); pm10Chart.data.datasets[1].data = data.map(d => d.pred_pm10); pm10Chart.update();
+        envChart.data.labels = timestamps; envChart.data.datasets[0].data = data.map(d => d.temperature); envChart.data.datasets[1].data = data.map(d => d.humidity); envChart.update();
 
-      } catch (err) { console.error("Fetch error:", err); }
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+      }
     }
 
-    // --- CSV Export Logic ---
-    function downloadCSV() {
-      if (!localHistoryCache || localHistoryCache.length === 0) return alert("No data available to export.");
-      
-      const headers = ['Record ID', 'Timestamp', 'Malaysia API', 'PM2.5', 'PM10', 'CO2 (ppm)', 'Temperature (C)', 'Humidity (%)'];
-      
-      const rows = localHistoryCache.map((row, index) => {
-        const id = row.id || (50000 - (localHistoryCache.length - 1 - index));
-        const api = calculateMalaysiaApi(row.pm25);
-        return [
-          id, 
-          new Date(row.timestamp).toLocaleString().replace(/,/g, ''), 
-          api, row.pm25, row.pm10, row.co2, row.temperature, row.humidity
-        ];
-      }).reverse();
-
-      const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `AirQuality_Export_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    // --- Modal Pagination & Search ---
+    // Modal Control Logic (User Control)
     function openHistoryModal() {
-      document.getElementById('historyModal').classList.remove('hidden');
-      document.getElementById('historyModal').classList.add('flex');
-      document.body.style.overflow = 'hidden';
+      const modal = document.getElementById('historyModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex'); // Ensure flex is applied for centering
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
       loadTableData();
+      
+      // Accessibility: Focus inside modal
+      document.getElementById('searchIdInput').focus();
     }
+
     function closeHistoryModal() {
-      document.getElementById('historyModal').classList.add('hidden');
-      document.getElementById('historyModal').classList.remove('flex');
-      document.body.style.overflow = 'auto';
+      const modal = document.getElementById('historyModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = 'auto'; // Restore scroll
       clearSearch();
     }
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !document.getElementById('historyModal').classList.contains('hidden')) closeHistoryModal(); });
-    document.getElementById('searchIdInput').addEventListener('input', (e) => { document.getElementById('clearSearchBtn').style.display = e.target.value ? 'block' : 'none'; });
+
+    // User Control: Listen for Escape Key to close modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !document.getElementById('historyModal').classList.contains('hidden')) {
+        closeHistoryModal();
+      }
+    });
+
+    // Search input listener for User Control (showing clear button)
+    document.getElementById('searchIdInput').addEventListener('input', (e) => {
+      document.getElementById('clearSearchBtn').style.display = e.target.value ? 'block' : 'none';
+    });
 
     function handleSearch() {
       const val = document.getElementById('searchIdInput').value;
       currentSearchId = val ? parseInt(val) : null;
-      currentPage = 1; loadTableData();
+      currentPage = 1; 
+      loadTableData();
     }
+
     function clearSearch() {
       document.getElementById('searchIdInput').value = '';
       document.getElementById('clearSearchBtn').style.display = 'none';
-      currentSearchId = null; currentPage = 1; loadTableData();
+      currentSearchId = null;
+      currentPage = 1;
+      loadTableData();
     }
+
     function changePage(direction) {
       currentPage += direction;
       if (currentPage < 1) currentPage = 1;
@@ -450,19 +446,26 @@
 
     async function loadTableData() {
       const tbody = document.getElementById('historyTableBody');
-      document.getElementById('tableLoadingSpinner').classList.remove('hidden');
+      const spinner = document.getElementById('tableLoadingSpinner');
+      spinner.classList.remove('hidden');
       
       try {
+        await new Promise(r => setTimeout(r, 250)); // Simulating API latency
+        
         let filteredData = [...localHistoryCache].reverse();
-        filteredData = filteredData.map((row, index) => ({ id: row.id || (50000 - index), ...row }));
+        // Mocking ID for demonstration
+        filteredData = filteredData.map((row, index) => ({ id: 50000 - index, ...row }));
 
-        if (currentSearchId) filteredData = filteredData.filter(r => r.id === currentSearchId);
+        if (currentSearchId) {
+          filteredData = filteredData.filter(r => r.id === currentSearchId);
+        }
 
         const limit = 20;
         const totalPages = Math.ceil(filteredData.length / limit) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
 
-        const displayData = filteredData.slice((currentPage - 1) * limit, (currentPage - 1) * limit + limit);
+        const startIdx = (currentPage - 1) * limit;
+        const displayData = filteredData.slice(startIdx, startIdx + limit);
 
         document.getElementById('pageIndicator').innerText = `Page ${currentPage} of ${totalPages}`;
         document.getElementById('totalRecordsText').innerText = `Total Records: ${filteredData.length}`;
@@ -470,14 +473,14 @@
         document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
 
         if (displayData.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400">No records found.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400">No records found ${currentSearchId ? `for ID #${currentSearchId}` : ''}</td></tr>`;
         } else {
           tbody.innerHTML = displayData.map(row => {
             const rowApi = calculateMalaysiaApi(row.pm25);
             const apiColor = rowApi <= 50 ? 'text-emerald-400' : rowApi <= 100 ? 'text-amber-400' : 'text-rose-400';
             return `
               <tr class="hover:bg-slate-700/50 transition-colors border-b border-slate-700/50 last:border-0">
-                <td class="p-3 font-bold text-indigo-400">#${row.id}</td>
+                <td class="p-3 font-bold text-indigo-400">#${row.id || '--'}</td>
                 <td class="p-3 text-slate-400">${new Date(row.timestamp).toLocaleString()}</td>
                 <td class="p-3 font-semibold ${apiColor}">${rowApi}</td>
                 <td class="p-3 text-sky-300">${row.pm25}</td>
@@ -489,14 +492,18 @@
             `;
           }).join('');
         }
-      } catch (err) { console.error(err); } finally { document.getElementById('tableLoadingSpinner').classList.add('hidden'); }
+      } catch (err) {
+        console.error("Table load error:", err);
+        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-rose-500">Error loading historical data.</td></tr>`;
+      } finally {
+        spinner.classList.add('hidden');
+      }
     }
 
-    // --- Init ---
     window.onload = () => {
       initCharts();
       fetchDashboardData();
-      setInterval(fetchDashboardData, 30000); // 30s auto-refresh
+      setInterval(fetchDashboardData, 30000);
     };
   </script>
 </body>
