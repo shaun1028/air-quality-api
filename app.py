@@ -202,13 +202,13 @@ def ingest_sensor_data():
     try:
         conn = get_db_connection()
         with conn.cursor() as cur:
-            # Query past 15 records from MySQL table and convert to list
             cur.execute(
                 """
-                SELECT co2, pm25, pm10, temperature, humidity, is_valid 
-                FROM sensor_logs 
-                ORDER BY timestamp DESC 
-                LIMIT 15
+                SELECT id, timestamp, co2, pm25, pm10, temperature, humidity,
+                       pred_pm25, pred_pm10, pred_co2
+                FROM sensor_logs
+                ORDER BY timestamp DESC
+                LIMIT 3000
             """
             )
             raw_history = cur.fetchall()
