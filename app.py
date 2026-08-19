@@ -136,7 +136,7 @@ def generate_ai_recommendation(current, pred_pm25, pred_pm10, pred_co2):
 
     try:
         response = ai_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             contents=prompt,
         )
         clean_text = response.text.replace("```json", "").replace("```", "").strip()
