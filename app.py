@@ -144,8 +144,15 @@ def generate_ai_recommendation(current, pred_pm25, pred_pm10, pred_co2):
         ai_data["last_updated"] = time.time()
         cached_ai_response = ai_data
         return ai_data
-    except Exception as e:
+except Exception as e:
         print(f"AI Generation Error: {e}")
+        # If Gemini fails, reset the cache so we don't get stuck on an old warning forever
+        cached_ai_response = {
+            "status_badge": "AI Syncing...",
+            "analysis": f"AI encountered a temporary delay. Retrying in 2 minutes...",
+            "action": "Please monitor the raw sensor values manually.",
+            "last_updated": time.time()  # Crucial: This resets the 2-minute timer!
+        }
         return cached_ai_response
 
 
