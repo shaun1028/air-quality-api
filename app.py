@@ -205,10 +205,10 @@ def ingest_sensor_data():
             cur.execute(
                 """
                 SELECT id, timestamp, co2, pm25, pm10, temperature, humidity,
-                       pred_pm25, pred_pm10, pred_co2
+                    pred_pm25, pred_pm10, pred_co2
                 FROM sensor_logs
                 ORDER BY timestamp DESC
-                LIMIT 3000
+                LIMIT 5000
             """
             )
             raw_history = cur.fetchall()
