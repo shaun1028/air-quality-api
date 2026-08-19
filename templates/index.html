@@ -187,9 +187,9 @@
               <th class="p-3 font-semibold">Record ID</th>
               <th class="p-3 font-semibold">Timestamp</th>
               <th class="p-3 font-semibold">API Score</th>
-              <th class="p-3 font-semibold">PM2.5</th>
-              <th class="p-3 font-semibold">PM10</th>
-              <th class="p-3 font-semibold">CO₂</th>
+              <th class="p-3 font-semibold">PM2.5 <span class="text-slate-500 lowercase text-[10px]">/ pred</span></th>
+              <th class="p-3 font-semibold">PM10 <span class="text-slate-500 lowercase text-[10px]">/ pred</span></th>
+              <th class="p-3 font-semibold">CO₂ <span class="text-slate-500 lowercase text-[10px]">/ pred</span></th>
               <th class="p-3 font-semibold">Temp</th>
               <th class="p-3 font-semibold">Humidity</th>
             </tr>
@@ -558,9 +558,9 @@ function updateChartsFromCache() {
                 <td class="p-3 font-bold text-indigo-400">#${row.id}</td>
                 <td class="p-3 text-slate-400">${new Date(row.timestamp).toLocaleString()}</td>
                 <td class="p-3 font-semibold ${apiColor}">${rowApi}</td>
-                <td class="p-3 text-sky-300">${row.pm25}</td>
-                <td class="p-3 text-teal-300">${row.pm10}</td>
-                <td class="p-3 text-purple-300">${row.co2}</td>
+                <td class="p-3 text-sky-300">${row.pm25} <span class="text-slate-500">/ ${row.pred_pm25 ?? '--'}</span></td>
+                <td class="p-3 text-teal-300">${row.pm10} <span class="text-slate-500">/ ${row.pred_pm10 ?? '--'}</span></td>
+                <td class="p-3 text-purple-300">${row.co2} <span class="text-slate-500">/ ${row.pred_co2 ?? '--'}</span></td>
                 <td class="p-3 text-orange-300">${row.temperature}°C</td>
                 <td class="p-3 text-blue-300">${row.humidity}%</td>
               </tr>
