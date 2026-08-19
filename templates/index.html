@@ -260,28 +260,28 @@
     }
 
     // Initialize all 4 charts (Added borderWidth: 2 so the data lines are bold and clear)
-    function initCharts() {
-      // Added borderWidth: 2 to ensure the actual data lines draw correctly
-      const commonSettings = { tension: 0.3, pointRadius: 2, pointHoverRadius: 5, borderWidth: 2 };
+function initCharts() {
+      // Added spanGaps: true so the lines don't break when we shift the time!
+      const commonSettings = { tension: 0.3, pointRadius: 2, pointHoverRadius: 5, borderWidth: 2, spanGaps: true };
       
       pm25Chart = new Chart(document.getElementById('pm25Chart').getContext('2d'), { 
         type: 'line', data: { labels: [], datasets: [ 
           { label: 'Actual PM2.5', borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.12)', data: [], fill: true, ...commonSettings }, 
-          { label: 'Pred PM2.5', borderColor: '#f43f5e', borderDash: [4, 4], data: [], fill: false, ...commonSettings }
+          { label: 'Forecasted (15m)', borderColor: '#f43f5e', borderDash: [4, 4], data: [], fill: false, ...commonSettings }
         ]}, options: getResponsiveChartOptions('µg/m³', '#38bdf8') 
       });
       
       co2Chart = new Chart(document.getElementById('co2Chart').getContext('2d'), { 
         type: 'line', data: { labels: [], datasets: [ 
           { label: 'Actual CO₂', borderColor: '#c084fc', backgroundColor: 'rgba(192, 132, 252, 0.12)', data: [], fill: true, ...commonSettings }, 
-          { label: 'Pred CO₂', borderColor: '#fbbf24', borderDash: [4, 4], data: [], fill: false, ...commonSettings }
+          { label: 'Forecasted (15m)', borderColor: '#fbbf24', borderDash: [4, 4], data: [], fill: false, ...commonSettings }
         ]}, options: getResponsiveChartOptions('ppm', '#c084fc') 
       });
       
       pm10Chart = new Chart(document.getElementById('pm10Chart').getContext('2d'), { 
         type: 'line', data: { labels: [], datasets: [ 
           { label: 'PM10 Coarse', borderColor: '#2dd4bf', backgroundColor: 'rgba(45, 212, 191, 0.12)', data: [], fill: true, ...commonSettings }, 
-          { label: 'Pred PM10', borderColor: '#fb7185', borderDash: [4, 4], data: [], fill: false, ...commonSettings }
+          { label: 'Forecasted (15m)', borderColor: '#fb7185', borderDash: [4, 4], data: [], fill: false, ...commonSettings }
         ]}, options: getResponsiveChartOptions('µg/m³', '#2dd4bf') 
       });
       
@@ -330,12 +330,13 @@
       updateChartsFromCache();
     }
 
-    function updateChartsFromCache() {
+function updateChartsFromCache() {
       if (!localHistoryCache.length) return;
       
       let filteredData = localHistoryCache;
       const now = Date.now();
 
+      // 1. Timeframe Filter
       if (currentChartRange === 'today') {
         const todayString = new Date().toLocaleDateString();
         filteredData = localHistoryCache.filter(d => new Date(d.timestamp).toLocaleDateString() === todayString);
@@ -345,6 +346,7 @@
         filteredData = localHistoryCache.filter(d => (now - new Date(d.timestamp).getTime()) <= 86400000);
       }
 
+      // 2. Update High/Low Context
       const todaysData = localHistoryCache.filter(d => new Date(d.timestamp).toLocaleDateString() === new Date().toLocaleDateString());
       if(todaysData.length > 0) {
         const pm25s = todaysData.map(d=>d.pm25).filter(n=>!isNaN(n));
@@ -355,11 +357,62 @@
         if(co2s.length) document.getElementById('co2HL').innerText = `H: ${Math.max(...co2s)} | L: ${Math.min(...co2s)}`;
       }
 
-      const timestamps = filteredData.map(d => new Date(d.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-      pm25Chart.data.labels = timestamps; pm25Chart.data.datasets[0].data = filteredData.map(d => d.pm25); pm25Chart.data.datasets[1].data = filteredData.map(d => d.pred_pm25); pm25Chart.update();
-      co2Chart.data.labels = timestamps; co2Chart.data.datasets[0].data = filteredData.map(d => d.co2); co2Chart.data.datasets[1].data = filteredData.map(d => d.pred_co2); co2Chart.update();
-      pm10Chart.data.labels = timestamps; pm10Chart.data.datasets[0].data = filteredData.map(d => d.pm10); pm10Chart.data.datasets[1].data = filteredData.map(d => d.pred_pm10); pm10Chart.update();
-      envChart.data.labels = timestamps; envChart.data.datasets[0].data = filteredData.map(d => d.temperature); envChart.data.datasets[1].data = filteredData.map(d => d.humidity); envChart.update();
+      // --- 3. THE TIME-SHIFTING ENGINE ---
+      let allTimestamps = new Set();
+      let alignedData = {}; 
+
+      filteredData.forEach(d => {
+         // Round to the nearest minute to align actuals and predictions perfectly
+         const t = Math.round(new Date(d.timestamp).getTime() / 60000) * 60000;
+         
+         allTimestamps.add(t);
+         if (!alignedData[t]) alignedData[t] = { actual: {}, pred: {} };
+         
+         // Map Actual values to the current time
+         alignedData[t].actual.pm25 = d.pm25;
+         alignedData[t].actual.co2 = d.co2;
+         alignedData[t].actual.pm10 = d.pm10;
+         alignedData[t].actual.temperature = d.temperature;
+         alignedData[t].actual.humidity = d.humidity;
+
+         // Map Predicted values exactly 15 minutes into the FUTURE
+         if (d.pred_pm25 !== null && d.pred_pm25 !== undefined) {
+             const futureT = t + (15 * 60000); 
+             allTimestamps.add(futureT);
+             if (!alignedData[futureT]) alignedData[futureT] = { actual: {}, pred: {} };
+             
+             alignedData[futureT].pred.pm25 = d.pred_pm25;
+             alignedData[futureT].pred.co2 = d.pred_co2;
+             alignedData[futureT].pred.pm10 = d.pred_pm10;
+         }
+      });
+      
+      // Sort the timeline chronologically
+      let sortedTimestamps = Array.from(allTimestamps).sort((a,b) => a - b);
+      
+      // Generate the X-Axis Labels
+      const labels = sortedTimestamps.map(t => new Date(t).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+
+      // Plot the shifted arrays (Missing data returns 'null' so Chart.js bridges the gap)
+      pm25Chart.data.labels = labels; 
+      pm25Chart.data.datasets[0].data = sortedTimestamps.map(t => alignedData[t].actual.pm25 ?? null);
+      pm25Chart.data.datasets[1].data = sortedTimestamps.map(t => alignedData[t].pred.pm25 ?? null);
+      pm25Chart.update();
+      
+      co2Chart.data.labels = labels; 
+      co2Chart.data.datasets[0].data = sortedTimestamps.map(t => alignedData[t].actual.co2 ?? null);
+      co2Chart.data.datasets[1].data = sortedTimestamps.map(t => alignedData[t].pred.co2 ?? null);
+      co2Chart.update();
+      
+      pm10Chart.data.labels = labels; 
+      pm10Chart.data.datasets[0].data = sortedTimestamps.map(t => alignedData[t].actual.pm10 ?? null);
+      pm10Chart.data.datasets[1].data = sortedTimestamps.map(t => alignedData[t].pred.pm10 ?? null);
+      pm10Chart.update();
+      
+      envChart.data.labels = labels; 
+      envChart.data.datasets[0].data = sortedTimestamps.map(t => alignedData[t].actual.temperature ?? null);
+      envChart.data.datasets[1].data = sortedTimestamps.map(t => alignedData[t].actual.humidity ?? null);
+      envChart.update();
     }
 
     async function handleManualRefresh() {
