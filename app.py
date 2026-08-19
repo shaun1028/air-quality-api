@@ -44,6 +44,7 @@ cached_ai_response = {
     "last_updated": 0,
 }
 
+last_telegram_alert_time = 0  # <--- Anti-spam timer for Telegram
 
 def get_db_connection():
     """Connects to the Railway MySQL database using DATABASE_URL."""
@@ -65,37 +66,54 @@ def get_db_connection():
 # ==========================================
 # 2. Telegram Alert Function
 # ==========================================
-def check_and_send_telegram_alert(pred_pm25, pred_pm10, pred_co2):
-    """Sends a Telegram alert if predicted 15-min levels breach safety limits."""
+def check_and_send_telegram_alert(current, pred_pm25, pred_pm10, pred_co2):
+    """Sends a Telegram alert if current OR predicted levels breach safety limits."""
+    global last_telegram_alert_time
+    
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         return
 
-    alerts = []
-    if pred_pm25 and pred_pm25 > 35.0:
-        alerts.append(f"• *PM2.5* predicted at `{pred_pm25:.1f} µg/m³` (Unhealthy)")
-    if pred_pm10 and pred_pm10 > 100.0:
-        alerts.append(f"• *PM10* predicted at `{pred_pm10:.1f} µg/m³` (Elevated)")
-    if pred_co2 and pred_co2 > 1000.0:
-        alerts.append(f"• *CO2* predicted at `{pred_co2:.0f} ppm` (Poor Ventilation)")
+    # ANTI-SPAM: Only allow 1 alert every 15 minutes (900 seconds)
+    if time.time() - last_telegram_alert_time < 900:
+        return
 
+    alerts = []
+    
+    # 1. Check PM2.5 (Danger Threshold > 55 µg/m³)
+    if current.get('pm25', 0) > 55.0:
+        alerts.append(f"🔴 *URGENT:* Current PM2.5 is dangerously high at `{current['pm25']} µg/m³`")
+    elif pred_pm25 and pred_pm25 > 55.0:
+        alerts.append(f"⚠️ *Warning:* PM2.5 predicted to reach `{pred_pm25:.1f} µg/m³` in 15 mins")
+
+    # 2. Check CO2 (New Higher Threshold > 1500 ppm)
+    if current.get('co2', 0) > 1500.0:
+        alerts.append(f"🔴 *URGENT:* Current CO2 is severely high at `{current['co2']} ppm`")
+    elif pred_co2 and pred_co2 > 1500.0:
+        alerts.append(f"⚠️ *Warning:* CO2 predicted to reach `{pred_co2:.0f} ppm` in 15 mins")
+
+    # 3. Check PM10 (Danger Threshold > 150 µg/m³)
+    if current.get('pm10', 0) > 150.0:
+        alerts.append(f"🔴 *URGENT:* Current PM10 is dangerously high at `{current['pm10']} µg/m³`")
+    elif pred_pm10 and pred_pm10 > 150.0:
+        alerts.append(f"⚠️ *Warning:* PM10 predicted to reach `{pred_pm10:.1f} µg/m³` in 15 mins")
+
+    # If any alerts were triggered, send the message!
     if alerts:
         message = (
-            "⚠️ *15-MINUTE AIR QUALITY WARNING* ⚠️\n\n"
-            "Forecast predicts thresholds will be exceeded:\n"
-            + "\n".join(alerts)
-            + "\n\n💡 *Recommendation:* Please turn on ventilation or air purifiers."
+            "🚨 *AIR QUALITY ALERT* 🚨\n\n"
+            "Hazardous conditions detected:\n\n"
+            + "\n\n".join(alerts)
+            + "\n\n💡 *Action Required:* Please open windows or activate air purifiers immediately."
         )
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         try:
             requests.post(
                 url,
-                json={
-                    "chat_id": TELEGRAM_CHAT_ID,
-                    "text": message,
-                    "parse_mode": "Markdown",
-                },
+                json={"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"},
                 timeout=5,
             )
+            # Reset the cooldown timer ONLY if the message successfully sends
+            last_telegram_alert_time = time.time() 
         except Exception as e:
             print(f"Telegram notification error: {e}")
 
@@ -144,7 +162,7 @@ def generate_ai_recommendation(current, pred_pm25, pred_pm10, pred_co2):
         ai_data["last_updated"] = time.time()
         cached_ai_response = ai_data
         return ai_data
-except Exception as e:
+    except Exception as e:
         print(f"AI Generation Error: {e}")
         # If Gemini fails, reset the cache so we don't get stuck on an old warning forever
         cached_ai_response = {
@@ -209,13 +227,13 @@ def ingest_sensor_data():
     try:
         conn = get_db_connection()
         with conn.cursor() as cur:
+            # Query past 15 records from MySQL table and convert to list
             cur.execute(
                 """
-                SELECT id, timestamp, co2, pm25, pm10, temperature, humidity,
-                    pred_pm25, pred_pm10, pred_co2
-                FROM sensor_logs
-                ORDER BY timestamp DESC
-                LIMIT 5000
+                SELECT co2, pm25, pm10, temperature, humidity, is_valid 
+                FROM sensor_logs 
+                ORDER BY timestamp DESC 
+                LIMIT 15
             """
             )
             raw_history = cur.fetchall()
@@ -232,8 +250,8 @@ def ingest_sensor_data():
                 pred_pm10 = round(float(predictions[1]), 2)
                 pred_co2 = round(float(predictions[2]), 2)
 
-                # Send Telegram alert if necessary
-                check_and_send_telegram_alert(pred_pm25, pred_pm10, pred_co2)
+            # Send alert based on Real-Time data AND predictions
+            check_and_send_telegram_alert(current_reading, pred_pm25, pred_pm10, pred_co2)
 
             # Insert current readings and forecast into MySQL
             cur.execute(
@@ -289,7 +307,7 @@ def get_dashboard_data():
                        pred_pm25, pred_pm10, pred_co2
                 FROM sensor_logs
                 ORDER BY timestamp DESC
-                LIMIT 30
+                LIMIT 5000
             """
             )
             raw_rows = cur.fetchall()
