@@ -16,13 +16,13 @@ app = Flask(__name__)
 # ==========================================
 # 1. Configuration & Model Loading
 # ==========================================
-MODEL_PATH = "random_forest_air_quality.pkl"
+MODEL_PATH = "linear_regression_air_quality.pkl"
 try:
-    rf_model = joblib.load(MODEL_PATH)
-    print("✅ Random Forest model loaded successfully!")
+    lr_model = joblib.load(MODEL_PATH)
+    print("✅ Linear Regression model loaded successfully!")
 except Exception as e:
     print(f"❌ Error loading model: {e}")
-    rf_model = None
+    lr_model = None
 
 # Railway Environment Variables
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -33,7 +33,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 # Initialize Gemini AI Client
 ai_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
-SENSOR_COLS = ["co2", "pm25", "pm10", "temperature", "humidity", "is_valid"]
+SENSOR_COLS = ["co2", "pm25", "pm10", "temperature", "humidity"]
 LAGS = [0, 5, 10, 15]
 
 # In-memory AI advice cache
@@ -179,7 +179,7 @@ def generate_ai_recommendation(current, pred_pm25, pred_pm10, pred_co2):
 # ==========================================
 def build_features_from_history(recent_rows, current_reading):
     """Combines previous MySQL rows with the live incoming reading
-    to construct the 24 lag features for the Random Forest model.
+    to construct the 20 lag features for the Linear Regression model.
     """
     all_readings = recent_rows + [current_reading]
     df = pd.DataFrame(all_readings)
