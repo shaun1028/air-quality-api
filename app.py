@@ -240,11 +240,11 @@ def ingest_sensor_data():
             recent_history = list(raw_history)[::-1] if raw_history else []
 
             # Predict if enough history is available
-            if len(recent_history) >= 15 and rf_model is not None:
+            if len(recent_history) >= 15 and lr_model is not None:
                 features_df = build_features_from_history(
                     recent_history, current_reading
                 )
-                predictions = rf_model.predict(features_df)[0]
+                predictions = lr_model.predict(features_df)[0]
 
                 pred_pm25 = round(float(predictions[0]), 2)
                 pred_pm10 = round(float(predictions[1]), 2)
