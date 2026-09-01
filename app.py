@@ -251,15 +251,18 @@ def ingest_sensor_data():
     if not data:
         return jsonify({"error": "Invalid JSON body"}), 400
 
+    # RUN THE SANITIZATION PROTOCOL
+    calculated_validity = validate_sensor_readings(data)
+
     current_reading = {
         "co2": float(data.get("co2", 0)),
         "pm25": float(data.get("pm25", 0)),
         "pm10": float(data.get("pm10", 0)),
         "temperature": float(data.get("temperature", 0)),
         "humidity": float(data.get("humidity", 0)),
-        "is_valid": int(data.get("is_valid", 1)),
+        "is_valid": calculated_validity,  # <--- Now uses the python logic!
     }
-
+    
     pred_pm25, pred_pm10, pred_co2 = None, None, None
 
     try:
