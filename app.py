@@ -197,6 +197,44 @@ def build_features_from_history(recent_rows, current_reading):
 
 
 # ==========================================
+# Data Sanitization Protocol
+# ==========================================
+def validate_sensor_readings(data):
+    """
+    Checks if raw sensor values fall within realistic physical boundaries.
+    If a sensor glitches and sends an impossible number, it flags is_valid = 0.
+    """
+    try:
+        co2 = float(data.get("co2", 0))
+        pm25 = float(data.get("pm25", 0))
+        pm10 = float(data.get("pm10", 0))
+        temp = float(data.get("temperature", 0))
+        hum = float(data.get("humidity", 0))
+
+        # 1. CO2 Boundary (Outdoor baseline is ~400, max MH-Z19B is 5000)
+        if co2 < 400 or co2 > 5000:
+            return 0
+            
+        # 2. Temperature Boundary (Indoor room shouldn't be freezing or boiling)
+        if temp < 0 or temp > 60:
+            return 0
+            
+        # 3. Humidity Boundary (Percentage must be 0-100)
+        if hum < 0 or hum > 100:
+            return 0
+            
+        # 4. Particulate Boundary (PMS5003 maxes out around 999)
+        if pm25 < 0 or pm25 > 999 or pm10 < 0 or pm10 > 999:
+            return 0
+
+        # If it passes all tests, the data is good!
+        return 1
+
+    except ValueError:
+        # If the sensor sent text/garbage instead of a number, flag as invalid
+        return 0
+        
+# ==========================================
 # 5. Routes
 # ==========================================
 
