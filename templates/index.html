@@ -54,108 +54,108 @@
     </section>
 
     <!-- Real-time KPI Cards Grid -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-  
-  <!-- 1. Malaysia API -->
-  <div id="apiCard" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
-    <div class="flex justify-between items-center mb-2">
-      <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">Malaysia API</h3>
-      <span id="apiBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300">Good</span>
-    </div>
-    <div class="flex items-end space-x-2">
-      <span id="apiValue" class="text-4xl sm:text-5xl font-black text-white tracking-tight">--</span>
-    </div>
-  </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+      
+      <!-- 1. Malaysia API -->
+      <div id="apiCard" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">Malaysia API</h3>
+          <span id="apiBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Good</span>
+        </div>
+        <div class="flex items-end space-x-2">
+          <span id="apiValue" class="text-4xl sm:text-5xl font-black text-white tracking-tight">--</span>
+        </div>
+      </div>
 
-  <!-- 2. PM2.5 -->
-  <div id="pm25Card" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
-    <div class="flex justify-between items-center mb-2">
-      <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">PM2.5 (Fine)</h3>
-      <span id="pm25Badge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300">Good</span>
-    </div>
-    <div class="flex justify-between items-end">
-      <div>
-        <span id="pm25Value" class="text-3xl sm:text-4xl font-bold text-sky-400">--</span>
-        <span class="text-xs text-slate-500 ml-1">µg/m³</span>
+      <!-- 2. PM2.5 -->
+      <div id="pm25Card" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">PM2.5 (Fine)</h3>
+          <span id="pm25Badge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Good</span>
+        </div>
+        <div class="flex justify-between items-end">
+          <div>
+            <span id="pm25Value" class="text-3xl sm:text-4xl font-bold text-sky-400">--</span>
+            <span class="text-xs text-slate-500 ml-1">µg/m³</span>
+          </div>
+          <div class="text-right">
+            <span id="pm25Pred" class="text-[10px] sm:text-xs bg-sky-900/30 border border-sky-700/50 text-sky-300 px-2 py-0.5 rounded-md">15m: --</span>
+            <div id="pm25HL" class="text-[10px] text-slate-500 mt-1 font-mono">H: -- | L: --</div>
+          </div>
+        </div>
       </div>
-      <div class="text-right">
-        <span id="pm25Pred" class="text-[10px] sm:text-xs bg-sky-900/30 border border-sky-700/50 text-sky-300 px-2 py-0.5 rounded-md">15m: --</span>
-        <div id="pm25HL" class="text-[10px] text-slate-500 mt-1 font-mono">H: -- | L: --</div>
-      </div>
-    </div>
-  </div>
 
-  <!-- 3. PM10 -->
-  <div id="pm10Card" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
-    <div class="flex justify-between items-center mb-2">
-      <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">PM10 (Coarse)</h3>
-      <span id="pm10Badge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300">Good</span>
-    </div>
-    <div class="flex justify-between items-end">
-      <div>
-        <span id="pm10Value" class="text-3xl sm:text-4xl font-bold text-teal-400">--</span>
-        <span class="text-xs text-slate-500 ml-1">µg/m³</span>
+      <!-- 3. PM10 -->
+      <div id="pm10Card" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">PM10 (Coarse)</h3>
+          <span id="pm10Badge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Good</span>
+        </div>
+        <div class="flex justify-between items-end">
+          <div>
+            <span id="pm10Value" class="text-3xl sm:text-4xl font-bold text-teal-400">--</span>
+            <span class="text-xs text-slate-500 ml-1">µg/m³</span>
+          </div>
+          <div class="text-right">
+            <span id="pm10Pred" class="text-[10px] sm:text-xs bg-teal-900/30 border border-teal-700/50 text-teal-300 px-2 py-0.5 rounded-md">15m: --</span>
+            <div id="pm10HL" class="text-[10px] text-slate-500 mt-1 font-mono">H: -- | L: --</div>
+          </div>
+        </div>
       </div>
-      <div class="text-right">
-        <span id="pm10Pred" class="text-[10px] sm:text-xs bg-teal-900/30 border border-teal-700/50 text-teal-300 px-2 py-0.5 rounded-md">15m: --</span>
-        <div id="pm10HL" class="text-[10px] text-slate-500 mt-1 font-mono">H: -- | L: --</div>
-      </div>
-    </div>
-  </div>
 
-  <!-- 4. Carbon Dioxide (CO2) -->
-  <div id="co2Card" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
-    <div class="flex justify-between items-center mb-2">
-      <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">CO₂ Levels</h3>
-      <span id="co2Badge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300">Good</span>
-    </div>
-    <div class="flex justify-between items-end">
-      <div>
-        <span id="co2Value" class="text-3xl sm:text-4xl font-bold text-purple-400">--</span>
-        <span class="text-xs text-slate-500 ml-1">ppm</span>
+      <!-- 4. Carbon Dioxide (CO2) -->
+      <div id="co2Card" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">CO₂ Levels</h3>
+          <span id="co2Badge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Good</span>
+        </div>
+        <div class="flex justify-between items-end">
+          <div>
+            <span id="co2Value" class="text-3xl sm:text-4xl font-bold text-purple-400">--</span>
+            <span class="text-xs text-slate-500 ml-1">ppm</span>
+          </div>
+          <div class="text-right">
+            <span id="co2Pred" class="text-[10px] sm:text-xs bg-purple-900/30 border border-purple-700/50 text-purple-300 px-2 py-0.5 rounded-md">15m: --</span>
+            <div id="co2HL" class="text-[10px] text-slate-500 mt-1 font-mono">H: -- | L: --</div>
+          </div>
+        </div>
       </div>
-      <div class="text-right">
-        <span id="co2Pred" class="text-[10px] sm:text-xs bg-purple-900/30 border border-purple-700/50 text-purple-300 px-2 py-0.5 rounded-md">15m: --</span>
-        <div id="co2HL" class="text-[10px] text-slate-500 mt-1 font-mono">H: -- | L: --</div>
-      </div>
-    </div>
-  </div>
 
-  <!-- 5. Temperature -->
-  <div id="tempCard" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
-    <div class="flex justify-between items-center mb-2">
-      <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">Temperature</h3>
-      <span id="tempBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300">Good</span>
-    </div>
-    <div class="flex justify-between items-end">
-      <div>
-        <span id="tempValue" class="text-3xl sm:text-4xl font-bold text-orange-400">--</span>
-        <span class="text-xs text-slate-500 ml-1">°C</span>
+      <!-- 5. Temperature -->
+      <div id="tempCard" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">Temperature</h3>
+          <span id="tempBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Good</span>
+        </div>
+        <div class="flex justify-between items-end">
+          <div>
+            <span id="tempValue" class="text-3xl sm:text-4xl font-bold text-orange-400">--</span>
+            <span class="text-xs text-slate-500 ml-1">°C</span>
+          </div>
+          <div class="text-right">
+            <div id="tempHL" class="text-[10px] text-slate-500 mt-1 font-mono">H: -- | L: --</div>
+          </div>
+        </div>
       </div>
-      <div class="text-right">
-        <div id="tempHL" class="text-[10px] text-slate-500 mt-1 font-mono">H: -- | L: --</div>
-      </div>
-    </div>
-  </div>
 
-  <!-- 6. Humidity -->
-  <div id="humCard" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
-    <div class="flex justify-between items-center mb-2">
-      <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">Humidity</h3>
-      <span id="humBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300">Good</span>
-    </div>
-    <div class="flex justify-between items-end">
-      <div>
-        <span id="humValue" class="text-3xl sm:text-4xl font-bold text-blue-400">--</span>
-        <span class="text-xs text-slate-500 ml-1">%</span>
+      <!-- 6. Humidity -->
+      <div id="humCard" class="p-4 sm:p-6 rounded-2xl border transition-all duration-300 bg-slate-800 border-slate-700">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">Humidity</h3>
+          <span id="humBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Good</span>
+        </div>
+        <div class="flex justify-between items-end">
+          <div>
+            <span id="humValue" class="text-3xl sm:text-4xl font-bold text-blue-400">--</span>
+            <span class="text-xs text-slate-500 ml-1">%</span>
+          </div>
+          <div class="text-right">
+            <div id="humHL" class="text-[10px] text-slate-500 mt-1 font-mono">H: -- | L: --</div>
+          </div>
+        </div>
       </div>
-      <div class="text-right">
-        <div id="humHL" class="text-[10px] text-slate-500 mt-1 font-mono">H: -- | L: --</div>
-      </div>
-    </div>
-  </div>
 
-</div>
+    </div>
 
     <!-- Chart Controls -->
     <div class="flex flex-col sm:flex-row justify-between items-center bg-slate-800/50 p-2 sm:p-3 rounded-xl border border-slate-700/50 gap-3">
@@ -279,38 +279,32 @@
       return Math.min(Math.max(api, 0), 500);
     }
     
-  // Dynamic Card Coloring Engine
-    function evaluateCardHealth(cardId, badgeId, value, warnLimit, dangerLimit) {
-      const card = document.getElementById(cardId);
+    // Dynamic Text & Badge Coloring Engine (Typography Only - Cards stay dark!)
+    function evaluateCardHealth(valueId, badgeId, value, warnLimit, dangerLimit, defaultColorClass) {
+      const valueText = document.getElementById(valueId);
       const badge = document.getElementById(badgeId);
-      if (!card || !badge || isNaN(value)) return;
+      if (!valueText || !badge || isNaN(value)) return;
+
+      const baseTextClass = "text-3xl sm:text-4xl font-bold ";
+      const isApi = valueId === 'apiValue';
+      const finalBaseClass = isApi ? "text-4xl sm:text-5xl font-black tracking-tight " : baseTextClass;
 
       if (value >= dangerLimit) {
-        // RED: Danger
-        card.className = "p-4 sm:p-6 rounded-2xl border transition-all duration-300 shadow-lg bg-rose-950/40 border-rose-600 animate-pulse";
-        badge.className = "text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/50";
+        valueText.className = finalBaseClass + "text-rose-500";
+        badge.className = "text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-rose-500/20 text-rose-400 border border-rose-500/30";
         badge.innerText = "Danger";
       } else if (value >= warnLimit) {
-        // YELLOW: Warning
-        card.className = "p-4 sm:p-6 rounded-2xl border transition-all duration-300 shadow-lg bg-amber-950/40 border-amber-600/60";
-        badge.className = "text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/50";
+        valueText.className = finalBaseClass + "text-amber-400";
+        badge.className = "text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30";
         badge.innerText = "Warning";
       } else {
-        // GREEN: Safe/Good
-        card.className = "p-4 sm:p-6 rounded-2xl border transition-all duration-300 shadow-sm bg-slate-800 border-slate-700 hover:border-slate-600";
-        badge.className = "text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+        valueText.className = finalBaseClass + defaultColorClass;
+        badge.className = "text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
         badge.innerText = "Good";
       }
     }
-    function getApiClassification(api) {
-      if (api <= 50) return { label: "Baik (Good)", badge: "bg-blue-500/20 text-blue-300 border border-blue-500/30" };
-      if (api <= 100) return { label: "Sederhana (Moderate)", badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" };
-      if (api <= 200) return { label: "Tidak Sihat (Unhealthy)", badge: "bg-amber-500/20 text-amber-300 border border-amber-500/30" };
-      if (api <= 300) return { label: "Sangat Tidak Sihat (V. Unhealthy)", badge: "bg-rose-500/20 text-rose-300 border border-rose-500/30" };
-      return { label: "Berbahaya (Hazardous)", badge: "bg-purple-500/20 text-purple-300 border border-purple-500/30" };
-    }
 
-// Chart Configuration Helper (Restored Grid Lines)
+    // Chart Configuration Helper (Restored Grid Lines)
     function getResponsiveChartOptions(yTitle, yColor) {
       return {
         responsive: true, maintainAspectRatio: false,
@@ -318,13 +312,11 @@
         plugins: { legend: { position: 'top', labels: { color: '#cbd5e1', boxWidth: 8, font: { size: 11, family: "ui-sans-serif, system-ui, sans-serif" } } } },
         scales: {
           x: { 
-            // Changed from 0.04 opacity to a visible slate-700 hex color
             grid: { color: '#334155' }, 
             ticks: { color: '#94a3b8', font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } 
           },
           y: { 
             title: yTitle ? { display: true, text: yTitle, color: yColor, font: { size: 10, weight: 'bold' } } : { display: false }, 
-            // Restored visible grid lines here too
             grid: { color: '#334155' }, 
             ticks: { color: '#94a3b8', font: { size: 10 } } 
           }
@@ -332,9 +324,8 @@
       };
     }
 
-    // Initialize all 4 charts (Added borderWidth: 2 so the data lines are bold and clear)
-function initCharts() {
-      // Added spanGaps: true so the lines don't break when we shift the time!
+    // Initialize all 4 charts
+    function initCharts() {
       const commonSettings = { tension: 0.3, pointRadius: 2, pointHoverRadius: 5, borderWidth: 2, spanGaps: true };
       
       pm25Chart = new Chart(document.getElementById('pm25Chart').getContext('2d'), { 
@@ -403,13 +394,12 @@ function initCharts() {
       updateChartsFromCache();
     }
 
-function updateChartsFromCache() {
+    function updateChartsFromCache() {
       if (!localHistoryCache.length) return;
       
       let filteredData = localHistoryCache;
       const now = Date.now();
 
-      // 1. Timeframe Filter
       if (currentChartRange === 'today') {
         const todayString = new Date().toLocaleDateString();
         filteredData = localHistoryCache.filter(d => new Date(d.timestamp).toLocaleDateString() === todayString);
@@ -419,7 +409,6 @@ function updateChartsFromCache() {
         filteredData = localHistoryCache.filter(d => (now - new Date(d.timestamp).getTime()) <= 86400000);
       }
 
-      // 2. Update High/Low Context
       const todaysData = localHistoryCache.filter(d => new Date(d.timestamp).toLocaleDateString() === new Date().toLocaleDateString());
       if(todaysData.length > 0) {
         const pm25s = todaysData.map(d=>d.pm25).filter(n=>!isNaN(n));
@@ -430,25 +419,20 @@ function updateChartsFromCache() {
         if(co2s.length) document.getElementById('co2HL').innerText = `H: ${Math.max(...co2s)} | L: ${Math.min(...co2s)}`;
       }
 
-      // --- 3. THE TIME-SHIFTING ENGINE ---
       let allTimestamps = new Set();
       let alignedData = {}; 
 
       filteredData.forEach(d => {
-         // Round to the nearest minute to align actuals and predictions perfectly
          const t = Math.round(new Date(d.timestamp).getTime() / 60000) * 60000;
-         
          allTimestamps.add(t);
          if (!alignedData[t]) alignedData[t] = { actual: {}, pred: {} };
          
-         // Map Actual values to the current time
          alignedData[t].actual.pm25 = d.pm25;
          alignedData[t].actual.co2 = d.co2;
          alignedData[t].actual.pm10 = d.pm10;
          alignedData[t].actual.temperature = d.temperature;
          alignedData[t].actual.humidity = d.humidity;
 
-         // Map Predicted values exactly 15 minutes into the FUTURE
          if (d.pred_pm25 !== null && d.pred_pm25 !== undefined) {
              const futureT = t + (15 * 60000); 
              allTimestamps.add(futureT);
@@ -460,13 +444,9 @@ function updateChartsFromCache() {
          }
       });
       
-      // Sort the timeline chronologically
       let sortedTimestamps = Array.from(allTimestamps).sort((a,b) => a - b);
-      
-      // Generate the X-Axis Labels
       const labels = sortedTimestamps.map(t => new Date(t).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
 
-      // Plot the shifted arrays (Missing data returns 'null' so Chart.js bridges the gap)
       pm25Chart.data.labels = labels; 
       pm25Chart.data.datasets[0].data = sortedTimestamps.map(t => alignedData[t].actual.pm25 ?? null);
       pm25Chart.data.datasets[1].data = sortedTimestamps.map(t => alignedData[t].pred.pm25 ?? null);
@@ -506,20 +486,35 @@ function updateChartsFromCache() {
         const latest = localHistoryCache[localHistoryCache.length - 1];
         lastSensorTimestamp = new Date(latest.timestamp).getTime();
 
-        const latestApi = calculateMalaysiaApi(latest.pm25);
-        document.getElementById('apiValue').innerText = latestApi;
-        const apiInfo = getApiClassification(latestApi);
-        const apiBadge = document.getElementById('apiBadge');
-        apiBadge.innerText = apiInfo.label;
-        apiBadge.className = `text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full ${apiInfo.badge}`;
+        // 1. EXTRACT LATEST VALUES (Correctly placed inside the function now)
+        const pm25 = Number(latest.pm25) || 0;
+        const pm10 = Number(latest.pm10) || 0;
+        const co2 = Number(latest.co2) || 0;
+        const temp = Number(latest.temperature) || 0;
+        const hum = Number(latest.humidity) || 0;
+        const apiScore = calculateMalaysiaApi(pm25);
 
-        document.getElementById('currentPm25').innerText = `${latest.pm25}`;
-        document.getElementById('forecastPm25').innerText = `15m: ${latest.pred_pm25 ?? '--'}`;
-        document.getElementById('currentPm10').innerText = `${latest.pm10}`;
-        document.getElementById('forecastPm10').innerText = `15m: ${latest.pred_pm10 ?? '--'}`;
-        document.getElementById('currentCo2').innerText = `${latest.co2}`;
-        document.getElementById('forecastCo2').innerText = `15m: ${latest.pred_co2 ?? '--'}`;
+        // 2. UPDATE TEXT VALUES
+        document.getElementById('apiValue').innerText = apiScore;
+        document.getElementById('pm25Value').innerText = pm25;
+        document.getElementById('pm10Value').innerText = pm10;
+        document.getElementById('co2Value').innerText = co2;
+        document.getElementById('tempValue').innerText = temp.toFixed(1);
+        document.getElementById('humValue').innerText = hum.toFixed(1);
 
+        document.getElementById('pm25Pred').innerText = `15m: ${latest.pred_pm25 ?? '--'}`;
+        document.getElementById('pm10Pred').innerText = `15m: ${latest.pred_pm10 ?? '--'}`;
+        document.getElementById('co2Pred').innerText = `15m: ${latest.pred_co2 ?? '--'}`;
+
+        // 3. TRIGGER TEXT-ONLY COLOR ENGINE
+        evaluateCardHealth('pm25Value', 'pm25Badge', pm25, 35, 55, 'text-sky-400');
+        evaluateCardHealth('pm10Value', 'pm10Badge', pm10, 100, 150, 'text-teal-400');
+        evaluateCardHealth('co2Value', 'co2Badge', co2, 1000, 1500, 'text-purple-400');
+        evaluateCardHealth('apiValue', 'apiBadge', apiScore, 51, 101, 'text-white'); 
+        evaluateCardHealth('tempValue', 'tempBadge', temp, 29, 32, 'text-orange-400');
+        evaluateCardHealth('humValue', 'humBadge', hum, 70, 80, 'text-blue-400');
+
+        // 4. UPDATE AI COPILOT
         if (result.ai_advice) {
           const ai = result.ai_advice;
           const card = document.getElementById('aiAdvisorCard');
@@ -643,35 +638,6 @@ function updateChartsFromCache() {
       } catch (err) { console.error(err); } finally { document.getElementById('tableLoadingSpinner').classList.add('hidden'); }
     }
 
-    // Extract latest values
-          const pm25 = Number(latest.pm25) || 0;
-          const pm10 = Number(latest.pm10) || 0;
-          const co2 = Number(latest.co2) || 0;
-          const temp = Number(latest.temperature) || 0;
-          const hum = Number(latest.humidity) || 0;
-          const apiScore = calculateMalaysiaApi(pm25);
-
-          // Update Card Text
-          document.getElementById('apiValue').innerText = apiScore;
-          document.getElementById('pm25Value').innerText = pm25;
-          document.getElementById('pm10Value').innerText = pm10;
-          document.getElementById('co2Value').innerText = co2;
-          document.getElementById('tempValue').innerText = temp.toFixed(1);
-          document.getElementById('humValue').innerText = hum.toFixed(1);
-
-          document.getElementById('pm25Pred').innerText = `15m: ${latest.pred_pm25 ?? '--'}`;
-          document.getElementById('pm10Pred').innerText = `15m: ${latest.pred_pm10 ?? '--'}`;
-          document.getElementById('co2Pred').innerText = `15m: ${latest.pred_co2 ?? '--'}`;
-
-          // --- TRIGGER COLOR EVALUATION ENGINE ---
-          // Format: evaluateCardHealth('cardId', 'badgeId', value, warningThreshold, dangerThreshold)
-          evaluateCardHealth('pm25Card', 'pm25Badge', pm25, 35, 55);
-          evaluateCardHealth('pm10Card', 'pm10Badge', pm10, 100, 150);
-          evaluateCardHealth('co2Card', 'co2Badge', co2, 1000, 1500);
-          evaluateCardHealth('apiCard', 'apiBadge', apiScore, 51, 100); 
-          evaluateCardHealth('tempCard', 'tempBadge', temp, 29, 32);    // Warning >29°C, Danger >32°C
-          evaluateCardHealth('humCard', 'humBadge', hum, 70, 80);       // Warning >70%, Danger >80%
-    
     window.onload = () => {
       initCharts();
       fetchDashboardData();
